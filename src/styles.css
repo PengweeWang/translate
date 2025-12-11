@@ -1,0 +1,34 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 阻止页面级滚动 */
+}
+
+#translate-content {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px;
+  width: 100%;
+  height: 100%; 
+  text-align: left;
+  background-color: black;
+  color: white;
+
+  /* 允许内部滚动 */
+  overflow-y: auto;
+  overflow-x: hidden; 
+
+  /* 隐藏滚动条 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  
+  /* 自动换行 */
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+#translate-content::-webkit-scrollbar {
+  display: none;
+}
