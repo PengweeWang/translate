@@ -18,6 +18,7 @@ async function translateText(text, config) {
   const apiKey = providerConfig.api_key;
   const model = providerConfig.default_model;
   const temperature = providerConfig.temperature ?? 1.3;
+  const thinking = providerConfig.thinking;
 
   const prompt = eval(`\`${baseprompt}\``);
 
@@ -26,6 +27,7 @@ async function translateText(text, config) {
     messages: [{ role: "user", content: prompt }],
     temperature: temperature,
     stream: true,
+    thinking:{ "type": thinking }
   };
 
   // 取消上一个请求
@@ -204,6 +206,6 @@ document.addEventListener('mousedown', (e) => {
   }
 });
 
-document.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-});
+// document.addEventListener('contextmenu', (e) => {
+//     e.preventDefault();
+// });

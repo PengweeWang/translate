@@ -24,6 +24,17 @@ pub struct DeepSeekConfig {
     pub default_model: String,
     #[serde(default = "default_temperature")]
     pub temperature: f32,
+    pub thinking: String,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct DoubaoConfig {
+    pub api_base: String,
+    pub api_key: String,
+    pub default_model: String,
+    #[serde(default = "default_temperature")]
+    pub temperature: f32,
+    pub thinking: String,
 }
 
 fn default_temperature() -> f32 {
@@ -34,6 +45,19 @@ fn default_temperature() -> f32 {
 pub struct Config {
     pub select: SelectConfig,
     pub deepseek: DeepSeekConfig,
+    pub doubao: DoubaoConfig
+}
+
+impl Default for DoubaoConfig {
+    fn default() -> Self {
+        Self {
+            api_base: "https://ark.cn-beijing.volces.com/api/v3".to_string(),
+            api_key: "<YOUR_API_KEY_HERE>".to_string(),
+            default_model: "doubao-seed-1-6-251015".to_string(),
+            temperature: 1.3,
+            thinking: "disabled".to_string()
+        }
+    }
 }
 
 impl Default for DeepSeekConfig {
@@ -43,6 +67,7 @@ impl Default for DeepSeekConfig {
             api_key: "sk-<YOUR_API_KEY_HERE>".to_string(),
             default_model: "deepseek-chat".to_string(),
             temperature: 1.3,
+            thinking: "disabled".to_string()
         }
     }
 }
@@ -61,6 +86,7 @@ impl Default for Config {
         Self {
             deepseek: DeepSeekConfig::default(),
             select: SelectConfig::default(),
+            doubao: DoubaoConfig::default()
         }
     }
 }
@@ -119,6 +145,14 @@ api_base = "https://api.deepseek.com/v1"
 api_key = "sk-<YOUR_API_KEY_HERE>"
 default_model = "deepseek-chat"
 temperature = 1.3
+thinking: "disabled"
+
+[doubao]
+api_base = "https://ark.cn-beijing.volces.com/api/v3"
+api_key = "<your token>"
+default_model = "doubao-seed-1-6-251015"
+temperature = 1.0
+thinking: "disabled"
 "#;
         std::fs::write(&config_path, default_toml)
             .map_err(|e| format!("Failed to create config file: {}", e))?;

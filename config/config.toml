@@ -7,3 +7,11 @@ api_base = "https://api.deepseek.com/v1"  # API 基础地址
 api_key = "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # 替换为你的真实 API Key
 default_model = "deepseek-chat"        # 默认使用的模型
 temperature = 1.3                      # 生成随机性（0-2）
+thinking = "disabled" # enabled/disabled
+
+[doubao]
+api_base = "https://ark.cn-beijing.volces.com/api/v3"
+api_key = "<your token>"
+default_model = "doubao-seed-1-6-251015"
+temperature = 1.0
+thinking = "disabled"
