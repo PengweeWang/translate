@@ -1,5 +1,6 @@
 [select]
 llm = "deepseek"
+prompt = "请将以下内容准确、流畅地翻译成简体中文：\n\n${text}"
 
 [deepseek]
 api_base = "https://api.deepseek.com/v1"  # API 基础地址

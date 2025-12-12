@@ -14,6 +14,7 @@ pub async fn get_config() -> Result<Config, String> {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SelectConfig {
     pub llm: String,
+    pub prompt: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -50,6 +51,7 @@ impl Default for SelectConfig {
     fn default() -> Self {
         Self {
             llm: "deepseek".to_string(),
+            prompt: "请将以下内容准确、流畅地翻译成简体中文：\n\n${text}".to_string()
         }
     }
 }
@@ -110,6 +112,7 @@ pub fn open_config_file(app: &tauri::AppHandle) -> Result<(), String> {
         // 写入默认内容（可选：调用 config::read_or_create_config() 会自动创建）
         let default_toml = r#"[select]
 llm = "deepseek"
+prompt = "请将以下内容准确、流畅地翻译成简体中文：\n\n${text}"
 
 [deepseek]
 api_base = "https://api.deepseek.com/v1"

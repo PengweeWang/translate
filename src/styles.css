@@ -10,6 +10,7 @@ html, body {
   box-sizing: border-box;
   margin: 0;
   padding: 10px;
+  padding-top: 0px;
   width: 100%;
   height: 100%; 
   text-align: left;
@@ -31,4 +32,71 @@ html, body {
 
 #translate-content::-webkit-scrollbar {
   display: none;
+}
+
+
+/* markdown */
+#translate-content {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+}
+
+#translate-content h1, 
+#translate-content h2, 
+#translate-content h3, 
+#translate-content h4 {
+  margin-bottom: 0.5em;
+  font-weight: 600;
+  margin: 0;
+}
+
+#translate-content p {
+  margin-bottom: 1em;
+  margin: 0;
+}
+
+#translate-content ul, 
+#translate-content ol {
+  margin-left: 0.5em;
+  margin-bottom: 0.5em;
+}
+
+#translate-content code {
+  background-color: #2c2c2c;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 0.9em;
+}
+
+#translate-content pre {
+  background-color: #555555;
+  padding: 1em;
+  border-radius: 5px;
+  overflow-x: auto;
+  margin-bottom: 1em;
+}
+
+#translate-content blockquote {
+  border-left: 4px solid #2a2a2a;
+  padding-left: 1em;
+  margin-left: 0;
+  color: #ffffff;
+}
+
+#translate-content strong {
+  font-weight: 600;
+}
+
+#translate-content em {
+  font-style: italic;
+}
+
+#translate-content a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+#translate-content a:hover {
+  text-decoration: underline;
 }
