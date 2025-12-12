@@ -1,30 +1,27 @@
 const { listen } = window.__TAURI__.event;
 const { invoke } = window.__TAURI__.core;
 import renderMathInElement from "./assets/katex/contrib/auto-render.mjs";
-import axios from "./assets/axios.min.js";
 
 // 用于中断当前翻译请求（防抖/取消）
 let currentAbortController = null;
 let isAltPressed = false;
 
 async function translateText(text, config) {
-  const llm = config.select.llm; 
+  const llm = config.select.llm;
   const providerConfig = config[llm];
 
-  // 清理 API base
   const apiBase = providerConfig.api_base.trim();
   const apiKey = providerConfig.api_key;
   const model = providerConfig.default_model;
   const temperature = providerConfig.temperature ?? 1.3;
 
-  // 构建翻译 prompt
   const prompt = `请将以下内容准确、流畅地翻译成简体中文：\n\n${text}`;
 
   const payload = {
     model: model,
     messages: [{ role: "user", content: prompt }],
     temperature: temperature,
-    stream: true, // 关键：启用流式
+    stream: true,
   };
 
   // 取消上一个请求
@@ -34,54 +31,65 @@ async function translateText(text, config) {
   currentAbortController = new AbortController();
 
   const Dom = document.getElementById("translate-content");
-  Dom.innerHTML = ""; // 清空内容，准备流式追加
+  Dom.innerHTML = "";
 
   try {
-    const response = await axios.post(
-      `${apiBase}/chat/completions`,
-      payload,
-      {
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        responseType: "stream", // 注意：axios 在浏览器中不支持真正的 stream，但可用 onDownloadProgress 模拟
-        onDownloadProgress: (progressEvent) => {
-          const chunk = progressEvent.event.target.response;
-          if (typeof chunk !== "string") return;
+    const response = await fetch(`${apiBase}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: currentAbortController.signal,
+    });
 
-          // 按行分割（SSE 格式：data: {...}\n\ndata: {...}\n\n）
-          const lines = chunk.split("\n").filter(line => line.trim() !== "");
-          let fullContent = "";
+    if (!response.ok || !response.body) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
 
-          for (const line of lines) {
-            if (line.startsWith("data: ")) {
-              const dataStr = line.slice(6); // 去掉 "data: "
-              if (dataStr === "[DONE]") break;
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let fullContent = "";
+    let buffer = "";
 
-              try {
-                const parsed = JSON.parse(dataStr);
-                const content = parsed.choices?.[0]?.delta?.content || "";
-                if (content) {
-                  fullContent += content;
-                  // 实时更新 DOM
-                  Dom.textContent = fullContent;
-                }
-              } catch (e) {
-                console.warn("Failed to parse SSE data:", dataStr, e);
-              }
-            }
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+
+      // 处理可能的多行数据
+      let lines = buffer.split('\n');
+      buffer = lines.pop() || ""; // 保留不完整的最后一行
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const dataStr = line.slice(6).trim();
+          if (dataStr === '[DONE]') {
+            reader.cancel();
+            return;
           }
-        },
-        signal: currentAbortController.signal,
+
+          try {
+            const parsed = JSON.parse(dataStr);
+            const content = parsed.choices?.[0]?.delta?.content || '';
+            if (content) {
+              fullContent += content;
+              Dom.textContent = fullContent; // 实时更新文本
+            }
+          } catch (e) {
+            console.warn('Failed to parse SSE data:', dataStr, e);
+          }
+        }
       }
-    );
+    }
   } catch (error) {
-    if (axios.isCancel(error)) {
-      console.log("请求被取消");
+    if (error.name === 'AbortError') {
+      console.log('请求被取消');
     } else {
-      console.error("翻译出错:", error);
-      Dom.textContent = "翻译失败，请检查网络或 API 配置。";
+      console.error('翻译出错:', error);
+      Dom.textContent = '翻译失败，请检查网络或 API 配置。';
     }
   }
 }
@@ -139,11 +147,15 @@ window.addEventListener('keyup', (e) => {
   }
 });
 
-// 防止 ALT 菜单弹出（可选）
+// 防止 ALT 菜单弹出
 document.addEventListener('mousedown', (e) => {
   if (e.button === 0 && isAltPressed) { // 左键 + ALT
     e.preventDefault();
     // 调用 Tauri 命令开始拖拽
     invoke('start_drag');
   }
+});
+
+document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
 });

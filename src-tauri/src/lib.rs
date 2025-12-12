@@ -14,7 +14,6 @@ use config::open_config_file;
 #[tauri::command]
 fn send_text() -> String {
     let text = get_text();
-    println!("{:?}", text);
     text
 }
 
