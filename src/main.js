@@ -23,7 +23,7 @@ async function translateText(text) {
   const temperature = providerConfig.temperature ?? 1.3;
   const thinking = providerConfig.thinking;
 
-  const prompt = eval(`\`${baseprompt}\``);
+  const prompt = baseprompt.replace(/\${text}/g, text);
 
   const payload = {
     model: model,
