@@ -4638,7 +4638,7 @@ dependencies = [
 
 [[package]]
 name = "translate"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "dirs",
  "mouse_position",
