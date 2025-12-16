@@ -106,7 +106,7 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
             }
             // 切换快捷键开关
             "shortcut" => {
-                let caps_lock = Shortcut::new(Some(Modifiers::CONTROL), Code::CapsLock);
+                let caps_lock = Shortcut::new(Some(Modifiers::ALT), Code::CapsLock);
                 let mut enabled = shortcut_enabled.lock().unwrap();
                 *enabled = !*enabled;
 
@@ -151,7 +151,7 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
 fn setup_capslock_shortcut(app: &tauri::App, enabled: Arc<Mutex<bool>>) -> tauri::Result<()> {
     use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 
-    let caps_lock = Shortcut::new(Some(Modifiers::CONTROL), Code::CapsLock);
+    let caps_lock = Shortcut::new(Some(Modifiers::ALT), Code::CapsLock);
 
     // 共享状态：记录上次按下时间
     let last_press = Arc::new(Mutex::new(Option::<Instant>::None));
