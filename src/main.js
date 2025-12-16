@@ -9,10 +9,13 @@ let isAltPressed = false;
 // 存储完整的Markdown内容
 let fullMarkdownContent = "";
 
-async function translateText(text, config) {
+async function translateText(text) {
+  let config = await invoke('get_config');
   const llm = config.select.llm;
   const baseprompt = config.select.prompt;
   const providerConfig = config[llm];
+
+  console.log(llm);
 
   const apiBase = providerConfig.api_base.trim();
   const apiKey = providerConfig.api_key;
@@ -157,8 +160,7 @@ async function renderIncrementalMarkdown(newContent) {
 
 async function main() {
   const Dom = document.getElementById("translate-content");
-  let config = await invoke('get_config');
-
+  
   const unlisten = await listen('get_text', async (event) => {
     const originalText = event.payload;
     if (!originalText.trim()) {
@@ -168,7 +170,7 @@ async function main() {
 
 
     // 执行翻译
-    await translateText(originalText, config);
+    await translateText(originalText);
   });
 
   // 可选：返回 unlisten 以便后续清理

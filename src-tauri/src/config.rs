@@ -41,7 +41,7 @@ fn default_temperature() -> f32 {
     1.3
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
     pub select: SelectConfig,
     pub deepseek: DeepSeekConfig,
@@ -162,6 +162,31 @@ thinking: "disabled"
     let _ = app
         .opener()
         .open_path(config_path.to_string_lossy(), None::<&str>);
+
+    Ok(())
+}
+
+
+
+// pub fn get_available_models() -> Vec<String> {
+//     vec!["deepseek".to_string(), "doubao".to_string()]
+// }
+
+pub fn switch_model(model_name: &str) -> Result<(), String> {
+    // 读取当前配置
+    let mut config = read_or_create_config().map_err(|e| format!("Failed to read config: {}", e))?;
+
+
+    // 更新选择的模型
+    config.select.llm = model_name.to_string();
+
+    // 将更新后的配置写回文件
+    let config_path = get_config_path();
+    let toml_content = toml::to_string_pretty(&config)
+        .map_err(|e| format!("Failed to serialize config: {}", e))?;
+
+    std::fs::write(&config_path, toml_content)
+        .map_err(|e| format!("Failed to write config file: {}", e))?;
 
     Ok(())
 }
