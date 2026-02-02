@@ -8,6 +8,7 @@ let currentAbortController = null;
 let isAltPressed = false;
 // 存储完整的Markdown内容
 let fullMarkdownContent = "";
+let dragbar = document.getElementById("dragbar");
 
 async function translateText(text) {
   let config = await invoke('get_config');
@@ -179,6 +180,17 @@ async function main() {
 
 window.addEventListener("DOMContentLoaded", () => {
   main();
+
+  const closeBtn = document.getElementById("close-btn");
+
+  closeBtn.addEventListener("click", async () => {
+    invoke('hide_panel');
+  });
+
+  closeBtn.addEventListener("mousedown", (e) => {
+    e.stopPropagation(); // 阻止事件冒泡到dragbar
+  });
+
 });
 
 window.addEventListener('keydown', (event) => {
@@ -200,7 +212,8 @@ window.addEventListener('keyup', (e) => {
 });
 
 // 防止 ALT 菜单弹出
-document.addEventListener('mousedown', (e) => {
+dragbar.addEventListener('mousedown', (e) => {
+  invoke('start_drag');
   if (e.button === 0 && isAltPressed) { // 左键 + ALT
     e.preventDefault();
     // 调用 Tauri 命令开始拖拽

@@ -45,7 +45,7 @@ fn default_temperature() -> f32 {
 pub struct Config {
     pub select: SelectConfig,
     pub deepseek: DeepSeekConfig,
-    pub doubao: DoubaoConfig
+    pub doubao: DoubaoConfig,
 }
 
 impl Default for DoubaoConfig {
@@ -55,7 +55,7 @@ impl Default for DoubaoConfig {
             api_key: "<YOUR_API_KEY_HERE>".to_string(),
             default_model: "doubao-seed-1-6-251015".to_string(),
             temperature: 1.3,
-            thinking: "disabled".to_string()
+            thinking: "disabled".to_string(),
         }
     }
 }
@@ -67,7 +67,7 @@ impl Default for DeepSeekConfig {
             api_key: "sk-<YOUR_API_KEY_HERE>".to_string(),
             default_model: "deepseek-chat".to_string(),
             temperature: 1.3,
-            thinking: "disabled".to_string()
+            thinking: "disabled".to_string(),
         }
     }
 }
@@ -76,7 +76,7 @@ impl Default for SelectConfig {
     fn default() -> Self {
         Self {
             llm: "deepseek".to_string(),
-            prompt: "请将以下内容准确、流畅地翻译成简体中文：\n\n${text}".to_string()
+            prompt: "请将以下内容准确、流畅地翻译成简体中文：\n\n${text}".to_string(),
         }
     }
 }
@@ -86,7 +86,7 @@ impl Default for Config {
         Self {
             deepseek: DeepSeekConfig::default(),
             select: SelectConfig::default(),
-            doubao: DoubaoConfig::default()
+            doubao: DoubaoConfig::default(),
         }
     }
 }
@@ -166,16 +166,14 @@ thinking: "disabled"
     Ok(())
 }
 
-
-
 // pub fn get_available_models() -> Vec<String> {
 //     vec!["deepseek".to_string(), "doubao".to_string()]
 // }
 
 pub fn switch_model(model_name: &str) -> Result<(), String> {
     // 读取当前配置
-    let mut config = read_or_create_config().map_err(|e| format!("Failed to read config: {}", e))?;
-
+    let mut config =
+        read_or_create_config().map_err(|e| format!("Failed to read config: {}", e))?;
 
     // 更新选择的模型
     config.select.llm = model_name.to_string();

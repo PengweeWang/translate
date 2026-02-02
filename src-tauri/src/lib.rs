@@ -1,22 +1,22 @@
-use selection::get_text;
-use std::sync::{Arc, Mutex};
-use std::time::{Duration, Instant};
-use tauri::menu::MenuItem;
-use tauri::tray::TrayIconBuilder;
-use tauri::Manager;
-mod windows;
-use tauri::Emitter;
-use windows::panel;
 mod config;
+mod windows;
 use config::get_config;
 use config::open_config_file;
 use config::read_or_create_config;
 use config::switch_model;
+use selection::get_text;
+use std::sync::{Arc, Mutex};
+use tauri::menu::MenuItem;
 use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, SubmenuBuilder};
-use tauri_plugin_global_shortcut::GlobalShortcutExt;
+use tauri::tray::TrayIconBuilder;
+use tauri::Emitter;
+use tauri::Manager;
 use tauri_plugin_global_shortcut::Code;
-use tauri_plugin_global_shortcut::Shortcut;
+use tauri_plugin_global_shortcut::GlobalShortcutExt;
 use tauri_plugin_global_shortcut::Modifiers;
+use tauri_plugin_global_shortcut::Shortcut;
+use windows::panel;
+use tauri_plugin_autostart::ManagerExt;
 
 
 #[tauri::command]
@@ -37,6 +37,10 @@ async fn start_drag(window: tauri::Window) {
         let _ = window.start_dragging();
     }
 }
+
+
+
+
 
 // 初始化托盘图标，接收 shortcut_enabled 状态用于控制菜单
 fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Result<()> {
@@ -72,17 +76,20 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
         .checked(current_model == "doubao") // 原生勾选状态
         .build(app)?;
 
+    let autostart_enable_item = CheckMenuItemBuilder::new("Autostart")
+        .id("autostart_enable").checked(false).build(app)?;
+
     // 构建Model子菜单
     let model_submenu = SubmenuBuilder::new(app, "Model") // 子菜单名称：Model
         .item(&deepseek_check_item) // 添加DeepSeek勾选项
         .item(&doubao_check_item) // 添加Doubao勾选项
         .build()?; // 构建子菜单
 
-
     let main_menu = MenuBuilder::new(app)
         .item(&config_item) // 配置项
         .item(&model_submenu) // Model子菜单（多级核心）
         .item(&shortcut_item) // 快捷键开关
+        .item(&autostart_enable_item)
         .item(&quit_item) // 退出项
         .build()?; // 构建主菜单
 
@@ -90,6 +97,7 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
     let shortcut_item_clone = shortcut_item.clone();
     let deepseek_check_clone = deepseek_check_item.clone();
     let doubao_check_clone = doubao_check_item.clone();
+    let autostart_enable_item_clone = autostart_enable_item.clone();
 
     // 4. 创建托盘图标并绑定菜单事件
     let _tray = TrayIconBuilder::new()
@@ -106,14 +114,14 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
             }
             // 切换快捷键开关
             "shortcut" => {
-                let caps_lock = Shortcut::new(Some(Modifiers::ALT), Code::CapsLock);
+                let shortcut_key = Shortcut::new(Some(Modifiers::ALT), Code::F1);
                 let mut enabled = shortcut_enabled.lock().unwrap();
                 *enabled = !*enabled;
 
                 if *enabled {
-                    let _ = app.global_shortcut().register(caps_lock);
+                    let _ = app.global_shortcut().register(shortcut_key);
                 } else {
-                    let _ = app.global_shortcut().unregister(caps_lock);
+                    let _ = app.global_shortcut().unregister(shortcut_key);
                 }
 
                 let new_text = if *enabled {
@@ -122,7 +130,6 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
                     "Enable Shortcut"
                 };
                 let _ = shortcut_item_clone.set_text(new_text);
-
             }
             // 选择DeepSeek模型
             "model_deepseek" => {
@@ -138,6 +145,16 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
                 let _ = deepseek_check_clone.set_checked(false);
                 let _ = doubao_check_clone.set_checked(true);
             }
+            "autostart_enable" => {
+                let auto_state = autostart_enable_item_clone.is_checked().unwrap_or_default();
+                let autostart_manager = app.autolaunch();
+                if auto_state {
+                    let _ = autostart_manager.enable();
+                } else {
+                    let _ = autostart_manager.disable();
+                }
+
+            }
             _ => {
                 println!("menu item {:?} not handled", event.id);
             }
@@ -148,47 +165,29 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
 }
 
 #[cfg(desktop)]
-fn setup_capslock_shortcut(app: &tauri::App, enabled: Arc<Mutex<bool>>) -> tauri::Result<()> {
-    use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
+fn setup_capslock_shortcut(app: &tauri::App) -> tauri::Result<()> {
+    use tauri_plugin_global_shortcut::{
+        Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState,
+    };
 
-    let caps_lock = Shortcut::new(Some(Modifiers::ALT), Code::CapsLock);
-
-    // 共享状态：记录上次按下时间
-    let last_press = Arc::new(Mutex::new(Option::<Instant>::None));
-    let last_press_clone = last_press.clone();
+    let shortcut_key = Shortcut::new(Some(Modifiers::ALT), Code::F1);
 
     let panel = app
         .get_webview_window("panel")
         .expect("Failed to get panel window");
 
     let panel_clone = panel.clone();
-    let _enabled_clone = enabled.clone();
 
     app.handle().plugin(
         tauri_plugin_global_shortcut::Builder::new()
             .with_handler(move |_app_handle, shortcut, event| {
-                // 检查是否启用快捷键
-                // if !*enabled_clone.lock().unwrap() {
-                //     return;
-                // }
-
-                if shortcut == &caps_lock {
+                if shortcut == &shortcut_key {
                     if let ShortcutState::Released = event.state() {
-                        let now = Instant::now();
-                        let mut last = last_press_clone.lock().unwrap();
-
-                        if let Some(last_time) = *last {
-                            let elapsed = now.duration_since(last_time);
-                            if elapsed < Duration::from_millis(300) {
-                                let text = get_text();
-                                if !text.is_empty() {
-                                    let _ = panel_clone.emit("get_text", text);
-                                    let _ = panel_clone.show();
-                                }
-                            }
-                            *last = None; // 防止三连击误触发
-                        } else {
-                            *last = Some(now);
+                        let text = get_text();
+                        if !text.is_empty() {
+                            let _ = panel_clone.emit("get_text", text);
+                            let _ = panel_clone.show();
+                            let _ = panel_clone.set_focus();
                         }
                     }
                 }
@@ -197,13 +196,14 @@ fn setup_capslock_shortcut(app: &tauri::App, enabled: Arc<Mutex<bool>>) -> tauri
     )?;
 
     // 注册快捷键（监听始终存在，但是否响应由 enabled 控制）
-    let _ = app.global_shortcut().register(caps_lock);
+    let _ = app.global_shortcut().register(shortcut_key);
     Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let handle = app.handle();
@@ -220,7 +220,7 @@ pub fn run() {
             #[cfg(desktop)]
             {
                 // 设置 CapsLock 双击监听（逻辑由 shortcut_enabled 控制）
-                setup_capslock_shortcut(app, shortcut_enabled.clone())?;
+                setup_capslock_shortcut(app)?;
             }
 
             Ok(())
