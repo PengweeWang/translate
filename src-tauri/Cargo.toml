@@ -1,6 +1,6 @@
 [package]
 name = "translate"
-version = "0.2.1"
+version = "0.2.2"
 description = "A word segmentation translation software"
 authors = ["PengWee Wang"]
 edition = "2021"

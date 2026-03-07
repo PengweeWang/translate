@@ -2,6 +2,7 @@ const { listen } = window.__TAURI__.event;
 const { invoke } = window.__TAURI__.core;
 import renderMathInElement from "./assets/katex/contrib/auto-render.mjs";
 import { marked } from "./assets/marked.esm.js"
+const { getCurrentWindow } = window.__TAURI__.window
 
 // 用于中断当前翻译请求（防抖/取消）
 let currentAbortController = null;
@@ -9,6 +10,8 @@ let isAltPressed = false;
 // 存储完整的Markdown内容
 let fullMarkdownContent = "";
 let dragbar = document.getElementById("dragbar");
+let isAlwaysOnTop = false;
+const currentWindow = getCurrentWindow();
 
 async function translateText(text) {
   let config = await invoke('get_config');
@@ -174,7 +177,6 @@ async function main() {
     await translateText(originalText);
   });
 
-  // 可选：返回 unlisten 以便后续清理
   window.unlistenTranslate = unlisten;
 }
 
@@ -182,6 +184,7 @@ window.addEventListener("DOMContentLoaded", () => {
   main();
 
   const closeBtn = document.getElementById("close-btn");
+  const topBtn = document.getElementById("top-btn");
 
   closeBtn.addEventListener("click", async () => {
     invoke('hide_panel');
@@ -189,6 +192,20 @@ window.addEventListener("DOMContentLoaded", () => {
 
   closeBtn.addEventListener("mousedown", (e) => {
     e.stopPropagation(); // 阻止事件冒泡到dragbar
+  });
+
+    // 新增：top按钮点击逻辑（切换置顶）
+  topBtn.addEventListener("click", async () => {
+    // 切换置顶状态
+    isAlwaysOnTop = !isAlwaysOnTop;
+    // 设置窗口置顶
+    await currentWindow.setAlwaysOnTop(isAlwaysOnTop);
+    // 更新视觉反馈：添加/移除active类
+    topBtn.classList.toggle("active", isAlwaysOnTop);
+  });
+
+  topBtn.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
   });
 
 });

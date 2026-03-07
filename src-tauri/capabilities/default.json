@@ -13,6 +13,7 @@
     "global-shortcut:allow-register",
     "global-shortcut:allow-unregister",
     "core:event:allow-listen",
-    "opener:allow-open-path"
+    "opener:allow-open-path",
+    "core:window:allow-set-always-on-top"
   ]
 }

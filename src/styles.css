@@ -18,11 +18,10 @@ html, body {
   z-index: 999;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   transition: background-color 0.2s ease;
-  /* 新增：Flex布局，让关闭按钮靠右垂直居中 */
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding: 0 8px; /* 右侧留间距，避免按钮贴边 */
+  justify-content: space-between; /* 两端对齐 */
+  padding: 0 8px; /* 左右留间距 */
 }
 #dragbar:active {
   cursor: grabbing;
@@ -35,25 +34,54 @@ html, body {
 #close-btn {
   width: 20px;
   height: 20px;
-  color: #ffffff; /* 浅白色，适配深色主题 */
+  color: #ffffff;
   font-size: 16px;
-  right: 0;
   line-height: 18px;
   text-align: center;
-  cursor: pointer; /* 指针光标，提示可点击 */
-  user-select: none; /* 防止误选文字 */
+  cursor: pointer;
+  user-select: none;
   transition: background-color 0.2s ease;
   padding: 0;
+  border-radius: 2px; 
 }
-/* 关闭按钮悬浮/点击反馈 */
 #close-btn:hover {
-  background-color: #ff3838; /* 悬浮加深背景 */
+  background-color: #ff3838;
 }
 #close-btn:active {
-  background-color: #ff0000; /* 点击再加深，强化反馈 */
+  background-color: #ff0000;
   color: #ffffff;
 }
 
+/* Top按钮样式 */
+#top-btn {
+  width: 20px;
+  height: 20px;
+  color: #ffffff;
+  font-size: 16px;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease; 
+  border-radius: 2px; 
+}
+
+#top-btn:hover {
+  background-color: #38ff5d33; 
+}
+/* 置顶激活状态 */
+#top-btn.active {
+  background-color: #38ff5d; 
+  color: #000; 
+}
+#top-btn.active svg path {
+  fill: rgb(0, 0, 0); /* 强制图标颜色跟随激活状态 */
+}
+/* 点击反馈 */
+#top-btn:active {
+  background-color: #4dff00;
+  color: #ffffff;
+}
 
 #translate-content {
   box-sizing: border-box;
@@ -66,16 +94,10 @@ html, body {
   text-align: left;
   background-color: #2a2a2a;
   color: white;
-
-  /* 允许内部滚动 */
   overflow-y: auto;
   overflow-x: hidden; 
-
-  /* 隐藏滚动条 */
   scrollbar-width: none;
   -ms-overflow-style: none;
-  
-  /* 自动换行 */
   overflow-wrap: break-word;
   white-space: normal;
 }
@@ -84,8 +106,7 @@ html, body {
   display: none;
 }
 
-
-/* markdown */
+/* markdown样式 */
 #translate-content {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
