@@ -15,3 +15,7 @@ api_key = "<your token>"
 default_model = "doubao-seed-1-6-251015"
 temperature = 1.0
 thinking = "disabled"
+
+[shortcuts]
+trigger_translation = "Alt+W"
+enabled_by_default = true

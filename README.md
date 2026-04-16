@@ -8,7 +8,7 @@
 - [x] markdown与公式渲染
 - [x] 文档
 - [x] 配置文件重载
-- [ ] 开机自启动
+- [x] 开机自启动
 - [ ] 更加完善的错误处理
 - [ ] 更多api支持
 - [ ] 自定义主题
@@ -30,7 +30,19 @@
 
 ### 快捷键
 
-目前划词翻译绑定弹窗为\<ALT-Capslock\>，选中文字后双击即可进行翻译；
+划词翻译快捷键支持通过配置文件自定义，默认是 `Alt+W`。
+
+配置路径：`~/.local/translate/config.toml`
+
+配置项：
+
+```toml
+[shortcuts]
+trigger_translation = "Alt+W"
+enabled_by_default = true
+```
+
+修改配置后，在系统托盘点击 `Reload Shortcut` 立即生效（无需重启）。
 
 可调整窗口大小；
 
@@ -41,6 +53,8 @@
 打开配置文件：系统托盘 - Config
 
 启用/关闭快捷键：系统托盘 - enable/disable shortcut
+
+重载快捷键配置：系统托盘 - Reload Shortcut
 
 完全退出应用: 系统托盘 - Quit
 

@@ -3,6 +3,8 @@ use std::fs;
 use std::path::PathBuf;
 use tauri_plugin_opener::OpenerExt;
 
+pub const DEFAULT_SHORTCUT_TRIGGER: &str = "Alt+W";
+
 #[tauri::command]
 pub async fn get_config() -> Result<Config, String> {
     match read_or_create_config() {
@@ -37,8 +39,24 @@ pub struct DoubaoConfig {
     pub thinking: String,
 }
 
+#[derive(Debug, Deserialize, Serialize, Clone)]
+pub struct ShortcutConfig {
+    #[serde(default = "default_shortcut_trigger")]
+    pub trigger_translation: String,
+    #[serde(default = "default_shortcut_enabled")]
+    pub enabled_by_default: bool,
+}
+
 fn default_temperature() -> f32 {
     1.3
+}
+
+fn default_shortcut_trigger() -> String {
+    DEFAULT_SHORTCUT_TRIGGER.to_string()
+}
+
+fn default_shortcut_enabled() -> bool {
+    true
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -46,6 +64,8 @@ pub struct Config {
     pub select: SelectConfig,
     pub deepseek: DeepSeekConfig,
     pub doubao: DoubaoConfig,
+    #[serde(default)]
+    pub shortcuts: ShortcutConfig,
 }
 
 impl Default for DoubaoConfig {
@@ -81,12 +101,22 @@ impl Default for SelectConfig {
     }
 }
 
+impl Default for ShortcutConfig {
+    fn default() -> Self {
+        Self {
+            trigger_translation: default_shortcut_trigger(),
+            enabled_by_default: default_shortcut_enabled(),
+        }
+    }
+}
+
 impl Default for Config {
     fn default() -> Self {
         Self {
             deepseek: DeepSeekConfig::default(),
             select: SelectConfig::default(),
             doubao: DoubaoConfig::default(),
+            shortcuts: ShortcutConfig::default(),
         }
     }
 }
@@ -145,14 +175,18 @@ api_base = "https://api.deepseek.com/v1"
 api_key = "sk-<YOUR_API_KEY_HERE>"
 default_model = "deepseek-chat"
 temperature = 1.3
-thinking: "disabled"
+thinking = "disabled"
 
 [doubao]
 api_base = "https://ark.cn-beijing.volces.com/api/v3"
 api_key = "<your token>"
 default_model = "doubao-seed-1-6-251015"
 temperature = 1.0
-thinking: "disabled"
+thinking = "disabled"
+
+[shortcuts]
+trigger_translation = "Alt+W"
+enabled_by_default = true
 "#;
         std::fs::write(&config_path, default_toml)
             .map_err(|e| format!("Failed to create config file: {}", e))?;

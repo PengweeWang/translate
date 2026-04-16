@@ -1,19 +1,19 @@
 mod config;
 mod windows;
 use config::get_config;
+use config::DEFAULT_SHORTCUT_TRIGGER;
 use config::open_config_file;
 use config::read_or_create_config;
 use config::switch_model;
 use selection::get_text;
+use std::str::FromStr;
 use std::sync::{Arc, Mutex};
 use tauri::menu::MenuItem;
 use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, SubmenuBuilder};
 use tauri::tray::TrayIconBuilder;
 use tauri::Emitter;
 use tauri::Manager;
-use tauri_plugin_global_shortcut::Code;
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
-use tauri_plugin_global_shortcut::Modifiers;
 use tauri_plugin_global_shortcut::Shortcut;
 use windows::panel;
 use tauri_plugin_autostart::ManagerExt;
@@ -38,12 +38,52 @@ async fn start_drag(window: tauri::Window) {
     }
 }
 
+#[derive(Clone)]
+struct ShortcutRuntimeState {
+    shortcut: Shortcut,
+    shortcut_text: String,
+    enabled: bool,
+}
+
+fn parse_shortcut_with_fallback(raw_shortcut: &str) -> (Shortcut, String) {
+    let normalized = raw_shortcut.trim();
+
+    match Shortcut::from_str(normalized) {
+        Ok(shortcut) => (shortcut, normalized.to_string()),
+        Err(err) => {
+            eprintln!(
+                "Invalid shortcut '{}': {}. Fallback to {}",
+                normalized, err, DEFAULT_SHORTCUT_TRIGGER
+            );
+            let fallback = Shortcut::from_str(DEFAULT_SHORTCUT_TRIGGER)
+                .expect("DEFAULT_SHORTCUT_TRIGGER must be valid");
+            (fallback, DEFAULT_SHORTCUT_TRIGGER.to_string())
+        }
+    }
+}
+
+fn load_shortcut_runtime_state() -> ShortcutRuntimeState {
+    let config = read_or_create_config().unwrap_or_else(|err| {
+        eprintln!("Failed to read config for shortcut: {}. Use defaults.", err);
+        Default::default()
+    });
+
+    let (shortcut, shortcut_text) =
+        parse_shortcut_with_fallback(&config.shortcuts.trigger_translation);
+
+    ShortcutRuntimeState {
+        shortcut,
+        shortcut_text,
+        enabled: config.shortcuts.enabled_by_default,
+    }
+}
+
 
 
 
 
 // 初始化托盘图标，接收 shortcut_enabled 状态用于控制菜单
-fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Result<()> {
+fn init_tray(app: &tauri::App, shortcut_state: Arc<Mutex<ShortcutRuntimeState>>) -> tauri::Result<()> {
     // ========== 1. 创建基础菜单项 ==========
     // 退出菜单项
     let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
@@ -53,11 +93,18 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
     let shortcut_item = MenuItem::with_id(
         app,
         "shortcut",
-        if *shortcut_enabled.lock().unwrap() {
+        if shortcut_state.lock().unwrap().enabled {
             "Disable Shortcut"
         } else {
             "Enable Shortcut"
         },
+        true,
+        None::<&str>,
+    )?;
+    let reload_shortcut_item = MenuItem::with_id(
+        app,
+        "reload_shortcut",
+        "Reload Shortcut",
         true,
         None::<&str>,
     )?;
@@ -89,6 +136,7 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
         .item(&config_item) // 配置项
         .item(&model_submenu) // Model子菜单（多级核心）
         .item(&shortcut_item) // 快捷键开关
+        .item(&reload_shortcut_item)
         .item(&autostart_enable_item)
         .item(&quit_item) // 退出项
         .build()?; // 构建主菜单
@@ -98,6 +146,7 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
     let deepseek_check_clone = deepseek_check_item.clone();
     let doubao_check_clone = doubao_check_item.clone();
     let autostart_enable_item_clone = autostart_enable_item.clone();
+    let shortcut_state_clone = shortcut_state.clone();
 
     // 4. 创建托盘图标并绑定菜单事件
     let _tray = TrayIconBuilder::new()
@@ -114,22 +163,79 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
             }
             // 切换快捷键开关
             "shortcut" => {
-                let shortcut_key = Shortcut::new(Some(Modifiers::ALT), Code::F1);
-                let mut enabled = shortcut_enabled.lock().unwrap();
-                *enabled = !*enabled;
+                let mut state = shortcut_state_clone.lock().unwrap();
+                let previous_enabled = state.enabled;
+                state.enabled = !state.enabled;
 
-                if *enabled {
-                    let _ = app.global_shortcut().register(shortcut_key);
+                let operation = if state.enabled {
+                    app.global_shortcut().register(state.shortcut.clone())
                 } else {
-                    let _ = app.global_shortcut().unregister(shortcut_key);
+                    app.global_shortcut().unregister(state.shortcut.clone())
+                };
+
+                if let Err(err) = operation {
+                    eprintln!(
+                        "Failed to {} shortcut {}: {}",
+                        if state.enabled { "register" } else { "unregister" },
+                        state.shortcut_text,
+                        err
+                    );
+                    state.enabled = previous_enabled;
                 }
 
-                let new_text = if *enabled {
+                let new_text = if state.enabled {
                     "Disable Shortcut"
                 } else {
                     "Enable Shortcut"
                 };
                 let _ = shortcut_item_clone.set_text(new_text);
+            }
+            "reload_shortcut" => {
+                let config = match read_or_create_config() {
+                    Ok(cfg) => cfg,
+                    Err(err) => {
+                        eprintln!("Failed to reload config: {}", err);
+                        return;
+                    }
+                };
+
+                let (new_shortcut, new_shortcut_text) =
+                    parse_shortcut_with_fallback(&config.shortcuts.trigger_translation);
+                let mut state = shortcut_state_clone.lock().unwrap();
+                let was_enabled = state.enabled;
+
+                if was_enabled {
+                    if let Err(err) = app.global_shortcut().unregister(state.shortcut.clone()) {
+                        eprintln!(
+                            "Failed to unregister old shortcut {}: {}",
+                            state.shortcut_text, err
+                        );
+                    }
+                }
+
+                state.shortcut = new_shortcut;
+                state.shortcut_text = new_shortcut_text;
+                state.enabled = config.shortcuts.enabled_by_default;
+
+                if state.enabled {
+                    if let Err(err) = app.global_shortcut().register(state.shortcut.clone()) {
+                        eprintln!(
+                            "Failed to register reloaded shortcut {}: {}",
+                            state.shortcut_text, err
+                        );
+                    }
+                }
+
+                let new_text = if state.enabled {
+                    "Disable Shortcut"
+                } else {
+                    "Enable Shortcut"
+                };
+                let _ = shortcut_item_clone.set_text(new_text);
+                println!(
+                    "Shortcut reloaded: {} (enabled: {})",
+                    state.shortcut_text, state.enabled
+                );
             }
             // 选择DeepSeek模型
             "model_deepseek" => {
@@ -165,38 +271,50 @@ fn init_tray(app: &tauri::App, shortcut_enabled: Arc<Mutex<bool>>) -> tauri::Res
 }
 
 #[cfg(desktop)]
-fn setup_capslock_shortcut(app: &tauri::App) -> tauri::Result<()> {
+fn setup_global_shortcut(app: &tauri::App, shortcut_state: Arc<Mutex<ShortcutRuntimeState>>) -> tauri::Result<()> {
     use tauri_plugin_global_shortcut::{
-        Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState,
+        GlobalShortcutExt, ShortcutState,
     };
-
-    let shortcut_key = Shortcut::new(Some(Modifiers::ALT), Code::F1);
 
     let panel = app
         .get_webview_window("panel")
         .expect("Failed to get panel window");
 
     let panel_clone = panel.clone();
+    let shortcut_state_for_handler = shortcut_state.clone();
 
     app.handle().plugin(
         tauri_plugin_global_shortcut::Builder::new()
             .with_handler(move |_app_handle, shortcut, event| {
-                if shortcut == &shortcut_key {
-                    if let ShortcutState::Released = event.state() {
-                        let text = get_text();
-                        if !text.is_empty() {
-                            let _ = panel_clone.emit("get_text", text);
-                            let _ = panel_clone.show();
-                            let _ = panel_clone.set_focus();
-                        }
+                let should_trigger = if let ShortcutState::Released = event.state() {
+                    let state = shortcut_state_for_handler.lock().unwrap();
+                    state.enabled && shortcut == &state.shortcut
+                } else {
+                    false
+                };
+
+                if should_trigger {
+                    let text = get_text();
+                    if !text.is_empty() {
+                        let _ = panel_clone.emit("get_text", text);
+                        let _ = panel_clone.show();
+                        let _ = panel_clone.set_focus();
                     }
                 }
             })
             .build(),
     )?;
 
-    // 注册快捷键（监听始终存在，但是否响应由 enabled 控制）
-    let _ = app.global_shortcut().register(shortcut_key);
+    let state = shortcut_state.lock().unwrap();
+    if state.enabled {
+        if let Err(err) = app.global_shortcut().register(state.shortcut.clone()) {
+            eprintln!(
+                "Failed to register initial shortcut {}: {}",
+                state.shortcut_text, err
+            );
+        }
+    }
+
     Ok(())
 }
 
@@ -208,19 +326,19 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle();
 
-            // 共享状态：是否启用快捷键
-            let shortcut_enabled = Arc::new(Mutex::new(true));
+            // 共享状态：快捷键内容 + 是否启用
+            let shortcut_state = Arc::new(Mutex::new(load_shortcut_runtime_state()));
 
             // 初始化托盘菜单
-            init_tray(app, shortcut_enabled.clone())?;
+            init_tray(app, shortcut_state.clone())?;
 
             // 创建 panel 窗口
             panel(&handle.clone());
 
             #[cfg(desktop)]
             {
-                // 设置 CapsLock 双击监听（逻辑由 shortcut_enabled 控制）
-                setup_capslock_shortcut(app)?;
+                // 按配置设置全局快捷键
+                setup_global_shortcut(app, shortcut_state.clone())?;
             }
 
             Ok(())
