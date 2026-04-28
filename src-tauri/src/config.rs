@@ -6,40 +6,39 @@ use tauri_plugin_opener::OpenerExt;
 // ========== 配置数据结构 ==========
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct SelectConfig {
     pub llm: String,
     /// 全局快捷键（格式如 "Alt+F1", "Ctrl+Shift+A"）
-    #[serde(default = "default_shortcut")]
     pub shortcut: String,
     /// 单词 prompt 模板（当检测到输入为单个英文单词时使用）
-    #[serde(default = "default_word_prompt")]
     pub word_prompt: String,
     /// 句子 prompt 模板（当检测到输入为短语/句子/段落时使用）
-    #[serde(default = "default_sentence_prompt")]
     pub sentence_prompt: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct DeepSeekConfig {
     pub api_base: String,
     pub api_key: String,
     pub default_model: String,
-    #[serde(default = "default_temperature")]
     pub temperature: f32,
     pub thinking: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct DoubaoConfig {
     pub api_base: String,
     pub api_key: String,
     pub default_model: String,
-    #[serde(default = "default_temperature")]
     pub temperature: f32,
     pub thinking: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct Config {
     pub select: SelectConfig,
     pub deepseek: DeepSeekConfig,
@@ -47,10 +46,6 @@ pub struct Config {
 }
 
 // ========== 默认值函数 ==========
-
-fn default_temperature() -> f32 {
-    1.3
-}
 
 fn default_shortcut() -> String {
     "Alt+F1".to_string()
@@ -138,10 +133,19 @@ pub fn read_or_create_config() -> Result<Config, Box<dyn std::error::Error>> {
         let toml = toml::to_string_pretty(&default_config)?;
         fs::write(&config_path, toml)?;
         println!("Created default config at: {:?}", config_path);
+        return Ok(default_config);
     }
 
     let contents = fs::read_to_string(&config_path)?;
     let config: Config = toml::from_str(&contents)?;
+
+    // 升级：重新序列化并与原文件比对，若不一致说明填充了缺失字段，写回完整配置
+    let serialized = toml::to_string_pretty(&config)?;
+    if serialized != contents {
+        fs::write(&config_path, &serialized)?;
+        println!("Config migration applied at: {:?}", config_path);
+    }
+
     Ok(config)
 }
 
