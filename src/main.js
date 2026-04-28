@@ -14,20 +14,22 @@ let isAlwaysOnTop = false;
 const currentWindow = getCurrentWindow();
 
 async function translateText(text) {
-  let config = await invoke('get_config');
+  // 并行获取配置和 prompt
+  const [config, prompt] = await Promise.all([
+    invoke('get_config'),
+    invoke('get_translate_prompt', { text }),
+  ]);
+
   const llm = config.select.llm;
-  const baseprompt = config.select.prompt;
   const providerConfig = config[llm];
 
-  console.log(llm);
+  console.log(`text type detected, using ${llm}`);
 
   const apiBase = providerConfig.api_base.trim();
   const apiKey = providerConfig.api_key;
   const model = providerConfig.default_model;
   const temperature = providerConfig.temperature ?? 1.3;
   const thinking = providerConfig.thinking;
-
-  const prompt = baseprompt.replace(/\${text}/g, text);
 
   const payload = {
     model: model,
@@ -112,21 +114,17 @@ async function translateText(text) {
 // Markdown渲染函数
 async function renderMarkdownWithMath(content) {
   const Dom = document.getElementById("translate-content");
-  
-  // 如果marked可用，使用marked解析Markdown
+
   if (typeof marked !== 'undefined') {
     try {
-      // 设置marked选项
       marked.setOptions({
-        breaks: true,  // 支持换行
-        gfm: true,     // 支持GitHub风格的Markdown
+        breaks: true,
+        gfm: true,
       });
-      
-      // 将Markdown转换为HTML
+
       const html = marked.parse(content);
       Dom.innerHTML = html;
-      
-      // 在HTML中渲染LaTeX数学公式
+
       renderMathInElement(Dom, {
         delimiters: [
           { left: "$$", right: "$$", display: true },
@@ -138,10 +136,9 @@ async function renderMarkdownWithMath(content) {
       });
     } catch (error) {
       console.error('Markdown渲染错误:', error);
-      Dom.textContent = content; // 降级为纯文本
+      Dom.textContent = content;
     }
   } else {
-    // 如果没有marked，降级为纯文本+LaTeX
     Dom.textContent = content;
     renderMathInElement(Dom, {
       delimiters: [
@@ -164,14 +161,13 @@ async function renderIncrementalMarkdown(newContent) {
 
 async function main() {
   const Dom = document.getElementById("translate-content");
-  
+
   const unlisten = await listen('get_text', async (event) => {
     const originalText = event.payload;
     if (!originalText.trim()) {
       Dom.textContent = "";
       return;
     }
-
 
     // 执行翻译
     await translateText(originalText);
@@ -191,16 +187,12 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   closeBtn.addEventListener("mousedown", (e) => {
-    e.stopPropagation(); // 阻止事件冒泡到dragbar
+    e.stopPropagation();
   });
 
-    // 新增：top按钮点击逻辑（切换置顶）
   topBtn.addEventListener("click", async () => {
-    // 切换置顶状态
     isAlwaysOnTop = !isAlwaysOnTop;
-    // 设置窗口置顶
     await currentWindow.setAlwaysOnTop(isAlwaysOnTop);
-    // 更新视觉反馈：添加/移除active类
     topBtn.classList.toggle("active", isAlwaysOnTop);
   });
 
@@ -228,16 +220,11 @@ window.addEventListener('keyup', (e) => {
   }
 });
 
-// 防止 ALT 菜单弹出
+// 拖拽栏事件
 dragbar.addEventListener('mousedown', (e) => {
   invoke('start_drag');
-  if (e.button === 0 && isAltPressed) { // 左键 + ALT
+  if (e.button === 0 && isAltPressed) {
     e.preventDefault();
-    // 调用 Tauri 命令开始拖拽
     invoke('start_drag');
   }
 });
-
-// document.addEventListener('contextmenu', (e) => {
-//     e.preventDefault();
-// });

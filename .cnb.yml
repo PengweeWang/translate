@@ -1,0 +1,56 @@
+master:
+  vscode:
+    - docker:
+        build: .ide/Dockerfile
+      services:
+        - vscode
+        - docker
+      runner:
+        cpus: 8
+      stages:
+        - name: install dependencies
+          script: |
+            npm install
+
+  push:
+    - docker:
+        build: .ide/Dockerfile
+      services:
+        - docker
+      runner:
+        cpus: 8
+      stages:
+        - name: install dependencies
+          script: |
+            npm install
+        - name: install system deps
+          script: |
+            apt-get update && apt-get install -y nsis libappindicator3-dev || true
+        - name: build Tauri app for Windows
+          script: |
+            npm run tauri build -- --target x86_64-pc-windows-gnu
+        - name: list build artifacts
+          script: |
+            find src-tauri/target/x86_64-pc-windows-gnu/release/bundle -type f \( -name "*.exe" -o -name "*.msi" \) || true
+        - name: generate changelog
+          image: cnbcool/changelog
+          exports:
+            latestChangeLog: LATEST_CHANGE_LOG
+        - name: extract version
+          script: |
+            VERSION=$(node -p "require('./src-tauri/tauri.conf.json').version")
+            echo "##[set-output version=$VERSION]"
+          exports:
+            version: TAURI_VERSION
+        - name: create release
+          type: git:release
+          options:
+            tag: v${TAURI_VERSION}
+            description: ${LATEST_CHANGE_LOG}
+        - name: upload release assets
+          image: cnbcool/attachments:latest
+          settings:
+            tag: v${TAURI_VERSION}
+            attachments:
+              - src-tauri/target/x86_64-pc-windows-gnu/release/bundle/msi/*.msi
+              - src-tauri/target/x86_64-pc-windows-gnu/release/bundle/nsis/*.exe

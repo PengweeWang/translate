@@ -1,21 +1,23 @@
 [select]
 llm = "deepseek"
-prompt = "请将以下内容准确、流畅地翻译成简体中文：\n\n${text}"
+shortcut = "Alt+F1"
+
+# 单词 prompt：当输入为单个英文单词时使用
+word_prompt = "请对以下单词提供词典释义，词性仅使用英文缩写（如 n.、v.、adj.、adv.、prep. 等），释义为中文。\n\n输出格式（Markdown）：\n\n## <单词原形>\n\n<词性缩写 1>. 释义 1；释义 2；...\n<词性缩写 2>. 释义 1；释义 2；...\n\n输入单词：${text}"
+
+# 句子 prompt：当输入为短语、句子、段落或非英文内容时使用
+sentence_prompt = "请将以下内容准确、流畅地翻译成简体中文：\n\n${text}"
 
 [deepseek]
-api_base = "https://api.deepseek.com/v1"  # API 基础地址
-api_key = "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"  # 替换为你的真实 API Key
-default_model = "deepseek-chat"        # 默认使用的模型
-temperature = 1.3                      # 生成随机性（0-2）
-thinking = "disabled" # enabled/disabled
+api_base = "https://api.deepseek.com/v1"
+api_key = "sk-<YOUR_API_KEY_HERE>"
+default_model = "deepseek-chat"
+temperature = 1.3
+thinking = "disabled"
 
 [doubao]
 api_base = "https://ark.cn-beijing.volces.com/api/v3"
-api_key = "<your token>"
+api_key = "<YOUR_API_KEY_HERE>"
 default_model = "doubao-seed-1-6-251015"
-temperature = 1.0
+temperature = 1.3
 thinking = "disabled"
-
-[shortcuts]
-trigger_translation = "Alt+W"
-enabled_by_default = true

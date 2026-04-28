@@ -3,20 +3,20 @@ use std::fs;
 use std::path::PathBuf;
 use tauri_plugin_opener::OpenerExt;
 
-pub const DEFAULT_SHORTCUT_TRIGGER: &str = "Alt+W";
-
-#[tauri::command]
-pub async fn get_config() -> Result<Config, String> {
-    match read_or_create_config() {
-        Ok(cfg) => Ok(cfg),
-        Err(e) => Err(format!("Failed to load config: {}", e)),
-    }
-}
+// ========== 配置数据结构 ==========
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct SelectConfig {
     pub llm: String,
-    pub prompt: String,
+    /// 全局快捷键（格式如 "Alt+F1", "Ctrl+Shift+A"）
+    #[serde(default = "default_shortcut")]
+    pub shortcut: String,
+    /// 单词 prompt 模板（当检测到输入为单个英文单词时使用）
+    #[serde(default = "default_word_prompt")]
+    pub word_prompt: String,
+    /// 句子 prompt 模板（当检测到输入为短语/句子/段落时使用）
+    #[serde(default = "default_sentence_prompt")]
+    pub sentence_prompt: String,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -40,42 +40,39 @@ pub struct DoubaoConfig {
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct ShortcutConfig {
-    #[serde(default = "default_shortcut_trigger")]
-    pub trigger_translation: String,
-    #[serde(default = "default_shortcut_enabled")]
-    pub enabled_by_default: bool,
+pub struct Config {
+    pub select: SelectConfig,
+    pub deepseek: DeepSeekConfig,
+    pub doubao: DoubaoConfig,
 }
+
+// ========== 默认值函数 ==========
 
 fn default_temperature() -> f32 {
     1.3
 }
 
-fn default_shortcut_trigger() -> String {
-    DEFAULT_SHORTCUT_TRIGGER.to_string()
+fn default_shortcut() -> String {
+    "Alt+F1".to_string()
 }
 
-fn default_shortcut_enabled() -> bool {
-    true
+fn default_word_prompt() -> String {
+    "请对以下单词提供词典释义，词性仅使用英文缩写（如 n.、v.、adj.、adv.、prep. 等），释义为中文。\n\n输出格式（Markdown）：\n\n## <单词原形>\n\n<词性缩写 1>. 释义 1；释义 2；...\n<词性缩写 2>. 释义 1；释义 2；...\n\n输入单词：${text}".to_string()
 }
 
-#[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct Config {
-    pub select: SelectConfig,
-    pub deepseek: DeepSeekConfig,
-    pub doubao: DoubaoConfig,
-    #[serde(default)]
-    pub shortcuts: ShortcutConfig,
+fn default_sentence_prompt() -> String {
+    "请将以下内容准确、流畅地翻译成简体中文：\n\n${text}".to_string()
 }
 
-impl Default for DoubaoConfig {
+// ========== Default 实现 ==========
+
+impl Default for SelectConfig {
     fn default() -> Self {
         Self {
-            api_base: "https://ark.cn-beijing.volces.com/api/v3".to_string(),
-            api_key: "<YOUR_API_KEY_HERE>".to_string(),
-            default_model: "doubao-seed-1-6-251015".to_string(),
-            temperature: 1.3,
-            thinking: "disabled".to_string(),
+            llm: "deepseek".to_string(),
+            shortcut: default_shortcut(),
+            word_prompt: default_word_prompt(),
+            sentence_prompt: default_sentence_prompt(),
         }
     }
 }
@@ -92,20 +89,14 @@ impl Default for DeepSeekConfig {
     }
 }
 
-impl Default for SelectConfig {
+impl Default for DoubaoConfig {
     fn default() -> Self {
         Self {
-            llm: "deepseek".to_string(),
-            prompt: "请将以下内容准确、流畅地翻译成简体中文：\n\n${text}".to_string(),
-        }
-    }
-}
-
-impl Default for ShortcutConfig {
-    fn default() -> Self {
-        Self {
-            trigger_translation: default_shortcut_trigger(),
-            enabled_by_default: default_shortcut_enabled(),
+            api_base: "https://ark.cn-beijing.volces.com/api/v3".to_string(),
+            api_key: "<YOUR_API_KEY_HERE>".to_string(),
+            default_model: "doubao-seed-1-6-251015".to_string(),
+            temperature: 1.3,
+            thinking: "disabled".to_string(),
         }
     }
 }
@@ -113,13 +104,14 @@ impl Default for ShortcutConfig {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            deepseek: DeepSeekConfig::default(),
             select: SelectConfig::default(),
+            deepseek: DeepSeekConfig::default(),
             doubao: DoubaoConfig::default(),
-            shortcuts: ShortcutConfig::default(),
         }
     }
 }
+
+// ========== 配置文件 I/O ==========
 
 /// 获取配置文件路径：~/.local/translate/config.toml
 fn get_config_path() -> PathBuf {
@@ -137,12 +129,10 @@ pub fn read_or_create_config() -> Result<Config, Box<dyn std::error::Error>> {
         .parent()
         .expect("Config path should have a parent");
 
-    // 如果目录不存在，创建它
     if !config_dir.exists() {
         fs::create_dir_all(config_dir)?;
     }
 
-    // 如果配置文件不存在，写入默认配置
     if !config_path.exists() {
         let default_config = Config::default();
         let toml = toml::to_string_pretty(&default_config)?;
@@ -150,49 +140,25 @@ pub fn read_or_create_config() -> Result<Config, Box<dyn std::error::Error>> {
         println!("Created default config at: {:?}", config_path);
     }
 
-    // 读取并解析配置文件
     let contents = fs::read_to_string(&config_path)?;
     let config: Config = toml::from_str(&contents)?;
     Ok(config)
 }
 
+/// 使用系统默认编辑器打开配置文件
 pub fn open_config_file(app: &tauri::AppHandle) -> Result<(), String> {
-    // 构建配置文件路径（与 config.rs 一致）
     let config_path = get_config_path();
 
-    // 确保文件存在（如果不存在，先创建）
     if !config_path.exists() {
-        // 调用你的配置初始化逻辑（或简单创建目录+文件）
         std::fs::create_dir_all(config_path.parent().unwrap())
             .map_err(|e| format!("Failed to create config dir: {}", e))?;
-        // 写入默认内容（可选：调用 config::read_or_create_config() 会自动创建）
-        let default_toml = r#"[select]
-llm = "deepseek"
-prompt = "请将以下内容准确、流畅地翻译成简体中文：\n\n${text}"
-
-[deepseek]
-api_base = "https://api.deepseek.com/v1"
-api_key = "sk-<YOUR_API_KEY_HERE>"
-default_model = "deepseek-chat"
-temperature = 1.3
-thinking = "disabled"
-
-[doubao]
-api_base = "https://ark.cn-beijing.volces.com/api/v3"
-api_key = "<your token>"
-default_model = "doubao-seed-1-6-251015"
-temperature = 1.0
-thinking = "disabled"
-
-[shortcuts]
-trigger_translation = "Alt+W"
-enabled_by_default = true
-"#;
-        std::fs::write(&config_path, default_toml)
+        let default_config = Config::default();
+        let toml_content = toml::to_string_pretty(&default_config)
+            .map_err(|e| format!("Failed to serialize default config: {}", e))?;
+        std::fs::write(&config_path, toml_content)
             .map_err(|e| format!("Failed to create config file: {}", e))?;
     }
 
-    // 使用 opener 插件打开文件
     let _ = app
         .opener()
         .open_path(config_path.to_string_lossy(), None::<&str>);
@@ -200,19 +166,30 @@ enabled_by_default = true
     Ok(())
 }
 
-// pub fn get_available_models() -> Vec<String> {
-//     vec!["deepseek".to_string(), "doubao".to_string()]
-// }
-
+/// 切换当前使用的 LLM 模型
 pub fn switch_model(model_name: &str) -> Result<(), String> {
-    // 读取当前配置
     let mut config =
         read_or_create_config().map_err(|e| format!("Failed to read config: {}", e))?;
 
-    // 更新选择的模型
     config.select.llm = model_name.to_string();
 
-    // 将更新后的配置写回文件
+    let config_path = get_config_path();
+    let toml_content = toml::to_string_pretty(&config)
+        .map_err(|e| format!("Failed to serialize config: {}", e))?;
+
+    std::fs::write(&config_path, toml_content)
+        .map_err(|e| format!("Failed to write config file: {}", e))?;
+
+    Ok(())
+}
+
+/// 更新全局快捷键
+pub fn update_shortcut(shortcut: &str) -> Result<(), String> {
+    let mut config =
+        read_or_create_config().map_err(|e| format!("Failed to read config: {}", e))?;
+
+    config.select.shortcut = shortcut.to_string();
+
     let config_path = get_config_path();
     let toml_content = toml::to_string_pretty(&config)
         .map_err(|e| format!("Failed to serialize config: {}", e))?;
