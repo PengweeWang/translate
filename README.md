@@ -13,6 +13,7 @@
 - **快捷键重载** — 可在配置文件中自定义快捷键，支持运行时热重载
 - **配置管理** — 配置文件位于 `~/.local/translate/config.toml`，支持通过系统编辑器直接编辑
 - **配置自动升级** — 新版新增配置字段时自动填充默认值并更新文件，无需手动迁移
+- **自动更新** — 启动时自动检查 GitHub Releases 新版本，支持托盘手动检查和开关
 
 ## 使用教程
 
@@ -44,6 +45,8 @@
 | Config | 用系统编辑器打开配置文件 |
 | Model | 切换 DeepSeek / Doubao 模型 |
 | Enable/Disable Shortcut | 启用/关闭全局快捷键 |
+| Auto Update | 开启/关闭启动时自动检查更新 |
+| Check for Updates | 手动检查新版本 |
 | Autostart | 开机自启（切换后即时生效） |
 | Quit | 完全退出应用 |
 

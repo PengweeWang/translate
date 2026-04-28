@@ -60,13 +60,19 @@ mod tests {
     fn test_build_prompt_word() {
         let word_prompt = "词典释义：${text}";
         let sentence_prompt = "翻译：${text}";
-        assert_eq!(build_prompt("hello", word_prompt, sentence_prompt), "词典释义：hello");
+        assert_eq!(
+            build_prompt("hello", word_prompt, sentence_prompt),
+            "词典释义：hello"
+        );
     }
 
     #[test]
     fn test_build_prompt_sentence() {
         let word_prompt = "词典释义：${text}";
         let sentence_prompt = "翻译：${text}";
-        assert_eq!(build_prompt("hello world", word_prompt, sentence_prompt), "翻译：hello world");
+        assert_eq!(
+            build_prompt("hello world", word_prompt, sentence_prompt),
+            "翻译：hello world"
+        );
     }
 }

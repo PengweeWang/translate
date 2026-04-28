@@ -1,8 +1,8 @@
 use crate::config;
 use crate::prompt;
 use crate::shortcut;
-use std::sync::{Arc, Mutex};
 use crate::tray::AppState;
+use std::sync::{Arc, Mutex};
 
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
@@ -39,8 +39,8 @@ pub async fn get_config() -> Result<config::Config, String> {
 /// 根据文本类型自动选择对应的 prompt 模板并构建完整 prompt
 #[tauri::command]
 pub async fn get_translate_prompt(text: String) -> Result<String, String> {
-    let cfg = config::read_or_create_config()
-        .map_err(|e| format!("Failed to load config: {}", e))?;
+    let cfg =
+        config::read_or_create_config().map_err(|e| format!("Failed to load config: {}", e))?;
     Ok(prompt::build_prompt(
         &text,
         &cfg.select.word_prompt,
@@ -56,8 +56,7 @@ pub async fn set_shortcut(
     state: tauri::State<'_, Arc<Mutex<AppState>>>,
 ) -> Result<String, String> {
     // 先验证快捷键格式是否合法（尝试注册来验证）
-    app.global_shortcut()
-        .is_registered(&*shortcut_str);
+    app.global_shortcut().is_registered(&*shortcut_str);
 
     // 获取旧快捷键
     let old_shortcut = {

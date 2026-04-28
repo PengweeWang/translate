@@ -7,13 +7,14 @@ mod windows;
 
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
+use tauri_plugin_updater::UpdaterExt;
 use tray::AppState;
 use windows::panel;
-
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
@@ -24,10 +25,15 @@ pub fn run() {
                 .map(|c| c.select.shortcut)
                 .unwrap_or_else(|_| "Alt+F1".to_string());
 
+            let auto_update = config::read_or_create_config()
+                .map(|c| c.general.auto_update)
+                .unwrap_or(true);
+
             // 共享状态
             let state = Arc::new(Mutex::new(AppState {
                 shortcut_enabled: true,
                 shortcut_key: shortcut_key.clone(),
+                auto_update_enabled: auto_update,
             }));
 
             // 初始化托盘菜单
@@ -44,6 +50,28 @@ pub fn run() {
 
             // 将共享状态注入 Tauri 管理
             app.manage(state);
+
+            // 启动时自动检查更新
+            if auto_update {
+                let handle = handle.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Ok(updater) = handle.updater() {
+                        match updater.check().await {
+                            Ok(Some(update)) => {
+                                if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
+                                    eprintln!("Failed to install update: {}", e);
+                                }
+                            }
+                            Ok(None) => {
+                                println!("No update available");
+                            }
+                            Err(e) => {
+                                eprintln!("Update check failed: {}", e);
+                            }
+                        }
+                    }
+                });
+            }
 
             Ok(())
         })

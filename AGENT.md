@@ -4,7 +4,7 @@
 
 **Translate**（划词翻译）是一个基于 Tauri 2 的桌面划词翻译应用，通过可自定义的全局快捷键（默认 Alt+F1）获取屏幕选中文本，利用 LLM API（DeepSeek / 豆包）进行流式翻译，结果展示在无边框悬浮面板中。
 
-- **版本**：0.3.0
+- **版本**：0.3.1
 - **标识符**：`com.translate.qiumo`
 - **作者**：PengWee Wang
 - **主要平台**：Windows（交叉编译），支持 Linux / macOS

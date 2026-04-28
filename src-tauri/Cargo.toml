@@ -1,6 +1,6 @@
 [package]
 name = "translate"
-version = "0.3.0"
+version = "0.3.1"
 description = "A word segmentation translation software"
 authors = ["PengWee Wang"]
 edition = "2021"
@@ -31,4 +31,5 @@ dirs = "6.0.0"
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"
 tauri-plugin-global-shortcut = "2"
+tauri-plugin-updater = "2"
 

@@ -5,10 +5,7 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 /// 设置全局快捷键：从配置读取快捷键字符串，释放时获取选中文本并显示翻译面板
 #[cfg(desktop)]
-pub fn setup_shortcut(
-    app: &tauri::App,
-    shortcut_str: &str,
-) -> tauri::Result<()> {
+pub fn setup_shortcut(app: &tauri::App, shortcut_str: &str) -> tauri::Result<()> {
     let panel = app
         .get_webview_window("panel")
         .expect("Failed to get panel window");

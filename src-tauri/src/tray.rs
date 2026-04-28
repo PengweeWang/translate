@@ -4,13 +4,15 @@ use tauri::menu::MenuItem;
 use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, SubmenuBuilder};
 use tauri::tray::TrayIconBuilder;
 
-use tauri_plugin_global_shortcut::GlobalShortcutExt;
 use tauri_plugin_autostart::ManagerExt;
+use tauri_plugin_global_shortcut::GlobalShortcutExt;
+use tauri_plugin_updater::UpdaterExt;
 
 /// 应用共享状态
 pub struct AppState {
     pub shortcut_enabled: bool,
     pub shortcut_key: String,
+    pub auto_update_enabled: bool,
 }
 
 /// 初始化系统托盘图标及菜单
@@ -26,16 +28,13 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
             "Enable Shortcut"
         }
     };
-    let shortcut_item = MenuItem::with_id(
-        app,
-        "shortcut",
-        shortcut_text,
-        true,
-        None::<&str>,
-    )?;
+    let shortcut_item = MenuItem::with_id(app, "shortcut", shortcut_text, true, None::<&str>)?;
 
     // 获取当前选中的模型
-    let current_model = config::read_or_create_config().unwrap_or_default().select.llm;
+    let current_model = config::read_or_create_config()
+        .unwrap_or_default()
+        .select
+        .llm;
 
     // 创建带勾选状态的模型项
     let deepseek_check_item = CheckMenuItemBuilder::new("DeepSeek")
@@ -53,6 +52,17 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
         .checked(false)
         .build(app)?;
 
+    let auto_update_enabled = {
+        let s = state.lock().unwrap();
+        s.auto_update_enabled
+    };
+    let auto_update_item = CheckMenuItemBuilder::new("Auto Update")
+        .id("auto_update")
+        .checked(auto_update_enabled)
+        .build(app)?;
+
+    let check_update_item = MenuItem::with_id(app, "check_update", "Check for Updates", true, None::<&str>)?;
+
     // 构建 Model 子菜单
     let model_submenu = SubmenuBuilder::new(app, "Model")
         .item(&deepseek_check_item)
@@ -63,6 +73,8 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
         .item(&config_item)
         .item(&model_submenu)
         .item(&shortcut_item)
+        .item(&auto_update_item)
+        .item(&check_update_item)
         .item(&autostart_enable_item)
         .item(&quit_item)
         .build()?;
@@ -72,6 +84,7 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
     let deepseek_check_clone = deepseek_check_item.clone();
     let doubao_check_clone = doubao_check_item.clone();
     let autostart_enable_item_clone = autostart_enable_item.clone();
+    let auto_update_item_clone = auto_update_item.clone();
 
     // 创建托盘图标并绑定菜单事件
     let _tray = TrayIconBuilder::new()
@@ -121,6 +134,30 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
                 } else {
                     let _ = autostart_manager.disable();
                 }
+            }
+            "auto_update" => {
+                let checked = auto_update_item_clone.is_checked().unwrap_or_default();
+                let _ = config::set_auto_update(checked);
+                let mut s = state.lock().unwrap();
+                s.auto_update_enabled = checked;
+            }
+            "check_update" => {
+                let app = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    if let Ok(updater) = app.updater() {
+                        match updater.check().await {
+                            Ok(Some(update)) => {
+                                let _ = update.download_and_install(|_, _| {}, || {}).await;
+                            }
+                            Ok(None) => {
+                                println!("No update available");
+                            }
+                            Err(e) => {
+                                eprintln!("Update check failed: {}", e);
+                            }
+                        }
+                    }
+                });
             }
             _ => {
                 println!("menu item {:?} not handled", event.id);

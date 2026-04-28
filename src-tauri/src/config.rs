@@ -39,10 +39,18 @@ pub struct DoubaoConfig {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 #[serde(default)]
+pub struct GeneralConfig {
+    /// 是否自动检查更新
+    pub auto_update: bool,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(default)]
 pub struct Config {
     pub select: SelectConfig,
     pub deepseek: DeepSeekConfig,
     pub doubao: DoubaoConfig,
+    pub general: GeneralConfig,
 }
 
 // ========== 默认值函数 ==========
@@ -96,12 +104,21 @@ impl Default for DoubaoConfig {
     }
 }
 
+impl Default for GeneralConfig {
+    fn default() -> Self {
+        Self {
+            auto_update: true,
+        }
+    }
+}
+
 impl Default for Config {
     fn default() -> Self {
         Self {
             select: SelectConfig::default(),
             deepseek: DeepSeekConfig::default(),
             doubao: DoubaoConfig::default(),
+            general: GeneralConfig::default(),
         }
     }
 }
@@ -193,6 +210,23 @@ pub fn update_shortcut(shortcut: &str) -> Result<(), String> {
         read_or_create_config().map_err(|e| format!("Failed to read config: {}", e))?;
 
     config.select.shortcut = shortcut.to_string();
+
+    let config_path = get_config_path();
+    let toml_content = toml::to_string_pretty(&config)
+        .map_err(|e| format!("Failed to serialize config: {}", e))?;
+
+    std::fs::write(&config_path, toml_content)
+        .map_err(|e| format!("Failed to write config file: {}", e))?;
+
+    Ok(())
+}
+
+/// 设置是否自动检查更新
+pub fn set_auto_update(enabled: bool) -> Result<(), String> {
+    let mut config =
+        read_or_create_config().map_err(|e| format!("Failed to read config: {}", e))?;
+
+    config.general.auto_update = enabled;
 
     let config_path = get_config_path();
     let toml_content = toml::to_string_pretty(&config)
