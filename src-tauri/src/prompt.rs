@@ -10,19 +10,15 @@ pub enum TextType {
 /// 判定文本类型：单个单词 vs 句子/短语
 ///
 /// 判定规则：
-/// - 去除首尾空白后，仅包含 ASCII 字母（a-z, A-Z），且长度不超过 50 → Word
-/// - 否则 → Sentence
+/// - 去除首尾空白后，中间存在空格 → Sentence
+/// - 否则 → Word
 pub fn detect_text_type(text: &str) -> TextType {
     let trimmed = text.trim();
 
-    if trimmed.is_empty() || trimmed.len() > 50 {
-        return TextType::Sentence;
-    }
-
-    if trimmed.chars().all(|c| c.is_ascii_alphabetic()) {
-        TextType::Word
-    } else {
+    if trimmed.contains(' ') {
         TextType::Sentence
+    } else {
+        TextType::Word
     }
 }
 
@@ -50,10 +46,16 @@ mod tests {
     fn test_detect_sentence() {
         assert_eq!(detect_text_type("hello world"), TextType::Sentence);
         assert_eq!(detect_text_type("hello, world"), TextType::Sentence);
-        assert_eq!(detect_text_type("hello123"), TextType::Sentence);
-        assert_eq!(detect_text_type(""), TextType::Sentence);
-        assert_eq!(detect_text_type("你好"), TextType::Sentence);
-        assert_eq!(detect_text_type("don't"), TextType::Sentence);
+        assert_eq!(detect_text_type("  hello world  "), TextType::Sentence);
+    }
+
+    #[test]
+    fn test_detect_word_with_non_alpha() {
+        assert_eq!(detect_text_type("hello123"), TextType::Word);
+        assert_eq!(detect_text_type("don't"), TextType::Word);
+        assert_eq!(detect_text_type("你好"), TextType::Word);
+        assert_eq!(detect_text_type(""), TextType::Word);
+        assert_eq!(detect_text_type("  hello  "), TextType::Word);
     }
 
     #[test]
