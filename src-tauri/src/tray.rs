@@ -47,9 +47,11 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
         .checked(current_model == "doubao")
         .build(app)?;
 
+    let autostart_state = app.autolaunch().is_enabled().unwrap_or(false);
+    println!("Autostart enabled: {}", autostart_state);
     let autostart_enable_item = CheckMenuItemBuilder::new("Autostart")
         .id("autostart_enable")
-        .checked(false)
+        .checked(autostart_state)
         .build(app)?;
 
     let auto_update_enabled = {
