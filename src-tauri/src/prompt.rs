@@ -34,15 +34,13 @@ pub fn detect_text_type(text: &str) -> TextType {
     }
 }
 
-/// 根据文本类型和配置构建对应的 prompt
-pub fn build_prompt(text: &str, word_prompt: &str, sentence_prompt: &str) -> String {
-    let template = match detect_text_type(text) {
+/// 根据文本类型选择对应的 prompt 模板（不替换 ${text}）
+pub fn select_template<'a>(text: &str, word_prompt: &'a str, sentence_prompt: &'a str) -> &'a str {
+    match detect_text_type(text) {
         TextType::Word => word_prompt,
         TextType::Sentence => sentence_prompt,
-    };
-    template.replace("${text}", text)
+    }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -90,22 +88,22 @@ mod tests {
     }
 
     #[test]
-    fn test_build_prompt_word() {
-        let word_prompt = "词典释义：${text}";
-        let sentence_prompt = "翻译：${text}";
+    fn test_select_template_word() {
+        let word_prompt = "词典释义：";
+        let sentence_prompt = "翻译：";
         assert_eq!(
-            build_prompt("hello", word_prompt, sentence_prompt),
-            "词典释义：hello"
+            select_template("hello", word_prompt, sentence_prompt),
+            "词典释义："
         );
     }
 
     #[test]
-    fn test_build_prompt_sentence() {
-        let word_prompt = "词典释义：${text}";
-        let sentence_prompt = "翻译：${text}";
+    fn test_select_template_sentence() {
+        let word_prompt = "词典释义：";
+        let sentence_prompt = "翻译：";
         assert_eq!(
-            build_prompt("hello world", word_prompt, sentence_prompt),
-            "翻译：hello world"
+            select_template("hello world", word_prompt, sentence_prompt),
+            "翻译："
         );
     }
 }

@@ -3,6 +3,7 @@ use crate::prompt;
 use crate::shortcut;
 use crate::tray::AppState;
 use std::sync::{Arc, Mutex};
+use serde::Serialize;
 
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
 
@@ -36,16 +37,24 @@ pub async fn get_config() -> Result<config::Config, String> {
     }
 }
 
-/// 根据文本类型自动选择对应的 prompt 模板并构建完整 prompt
+/// 分别返回翻译指令 prompt 和用户原始输入
+#[derive(Serialize)]
+pub struct TranslatePrompt {
+    pub prompt: String,
+    pub input: String,
+}
+
+/// 根据文本类型返回对应的 prompt 指令（去除 ${text}）和原始输入文本
 #[tauri::command]
-pub async fn get_translate_prompt(text: String) -> Result<String, String> {
+pub async fn get_translate_prompt(text: String) -> Result<TranslatePrompt, String> {
     let cfg =
         config::read_or_create_config().map_err(|e| format!("Failed to load config: {}", e))?;
-    Ok(prompt::build_prompt(
-        &text,
-        &cfg.select.word_prompt,
-        &cfg.select.sentence_prompt,
-    ))
+    let template = prompt::select_template(&text, &cfg.select.word_prompt, &cfg.select.sentence_prompt);
+    let prompt_clean = template.replace("${text}", "").trim().to_string();
+    Ok(TranslatePrompt {
+        prompt: prompt_clean,
+        input: text,
+    })
 }
 
 /// 设置自定义快捷键（格式如 "Alt+F1", "Ctrl+Shift+A"）

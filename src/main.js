@@ -14,8 +14,8 @@ let isAlwaysOnTop = false;
 const currentWindow = getCurrentWindow();
 
 async function translateText(text) {
-  // 并行获取配置和 prompt
-  const [config, prompt] = await Promise.all([
+  // 并行获取配置、prompt 指令和用户原始输入
+  const [config, { prompt, input }] = await Promise.all([
     invoke('get_config'),
     invoke('get_translate_prompt', { text }),
   ]);
@@ -33,7 +33,10 @@ async function translateText(text) {
 
   const payload = {
     model: model,
-    messages: [{ role: "user", content: prompt }],
+    messages: [
+      { role: "system", content: prompt },
+      { role: "user", content: input }
+    ],
     temperature: temperature,
     stream: true,
     thinking:{ "type": thinking }

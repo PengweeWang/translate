@@ -3,10 +3,10 @@ llm = "deepseek"
 shortcut = "Alt+F1"
 
 # 单词 prompt：当输入为单个英文单词时使用
-word_prompt = "请对以下单词提供词典释义，词性仅使用英文缩写（如 n.、v.、adj.、adv.、prep. 等），释义为中文。\n\n输出格式（Markdown）：\n\n## <单词原形>\n\n<词性缩写 1>. 释义 1；释义 2；...\n<词性缩写 2>. 释义 1；释义 2；...\n\n输入单词：${text}"
+word_prompt = "你是一个专业词典助手。用户会发送一个单词，请提供其词典释义。\n\n输出格式（Markdown，不要输出其他内容）：\n\n## <单词原形>\n\n<词性缩写>. 释义1；释义2；..."
 
 # 句子 prompt：当输入为短语、句子、段落或非英文内容时使用
-sentence_prompt = "请将以下内容准确、流畅地翻译成简体中文：\n\n${text}"
+sentence_prompt = "你是一个专业翻译助手。将用户发送的内容准确、流畅地翻译成简体中文，只输出译文，不要解释。"
 
 [deepseek]
 api_base = "https://api.deepseek.com/v1"

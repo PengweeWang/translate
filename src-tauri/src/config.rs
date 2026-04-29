@@ -60,11 +60,11 @@ fn default_shortcut() -> String {
 }
 
 fn default_word_prompt() -> String {
-    "请对以下单词提供词典释义，词性仅使用英文缩写（如 n.、v.、adj.、adv.、prep. 等），释义为中文。\n\n输出格式（Markdown）：\n\n## <单词原形>\n\n<词性缩写 1>. 释义 1；释义 2；...\n<词性缩写 2>. 释义 1；释义 2；...\n\n输入单词：${text}".to_string()
+    "你是一个专业词典助手。用户会发送一个单词，请提供其词典释义。\n\n输出格式（Markdown，不要输出其他内容）：\n\n## <单词原形>\n\n<词性缩写>. 释义1；释义2；...".to_string()
 }
 
 fn default_sentence_prompt() -> String {
-    "请将以下内容准确、流畅地翻译成简体中文：\n\n${text}".to_string()
+    "你是一个专业翻译助手。将用户发送的内容准确、流畅地翻译成简体中文，只输出译文，不要解释。".to_string()
 }
 
 // ========== Default 实现 ==========
