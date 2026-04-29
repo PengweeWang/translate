@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>划词翻译 · Translate</title>
+  <meta name="description" content="选中即译，AI 驱动的桌面翻译工具">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #060608;
+      --surface: rgba(255,255,255,.04);
+      --border: rgba(255,255,255,.08);
+      --accent: #7c6aff;
+      --accent-glow: rgba(124,106,255,.35);
+      --text: #f0f0f5;
+      --muted: #7a7a8c;
+      --radius: 16px;
+    }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 60px;
+      background: rgba(6,6,8,.7);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: .95rem; }
+    .nav-logo img { width: 28px; height: 28px; border-radius: 7px; }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-link { color: var(--muted); font-size: .88rem; text-decoration: none; transition: color .2s; }
+    .nav-link:hover { color: var(--text); }
+    #lang-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); padding: 5px 14px; border-radius: 20px;
+      cursor: pointer; font-size: .82rem; transition: all .2s;
+    }
+    #lang-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    /* ── Hero ── */
+    #hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+    }
+    .hero-glow {
+      position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 400px;
+      background: radial-gradient(ellipse, rgba(124,106,255,.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(124,106,255,.12); border: 1px solid rgba(124,106,255,.3);
+      color: #a89fff; padding: 5px 14px; border-radius: 20px;
+      font-size: .8rem; font-weight: 500; margin-bottom: 28px;
+      letter-spacing: .02em;
+    }
+    .badge::before { content: "●"; font-size: .5rem; color: #7c6aff; }
+    h1 {
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 800; line-height: 1.1;
+      letter-spacing: -.03em;
+      margin-bottom: 20px;
+    }
+    h1 .grad {
+      background: linear-gradient(135deg, #fff 30%, #a89fff 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--muted); max-width: 480px; margin: 0 auto 40px;
+    }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-bottom: 72px; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--accent); color: #fff;
+      padding: 13px 28px; border-radius: 10px;
+      font-weight: 600; font-size: .95rem; text-decoration: none;
+      box-shadow: 0 0 30px var(--accent-glow);
+      transition: all .2s;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 40px var(--accent-glow); }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); padding: 13px 24px; border-radius: 10px;
+      font-weight: 500; font-size: .95rem; text-decoration: none;
+      transition: all .2s;
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.07); }
+
+    /* App screenshot */
+    .hero-screenshot {
+      position: relative; max-width: 720px; width: 100%;
+    }
+    .screenshot-glow {
+      position: absolute; inset: -40px;
+      background: radial-gradient(ellipse at 50% 60%, rgba(124,106,255,.2) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero-screenshot img {
+      width: 100%; border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 40px 120px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.05);
+    }
+
+    /* ── Section base ── */
+    section { padding: 100px 24px; }
+    .container { max-width: 960px; margin: 0 auto; }
+    .section-label {
+      text-align: center; font-size: .78rem; font-weight: 600;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 16px;
+    }
+    h2 {
+      text-align: center; font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      font-weight: 800; letter-spacing: -.02em; margin-bottom: 12px;
+    }
+    .section-desc {
+      text-align: center; color: var(--muted); font-size: 1rem;
+      max-width: 480px; margin: 0 auto 56px;
+    }
+
+    /* ── Features ── */
+    #features { border-top: 1px solid var(--border); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .feat {
+      background: var(--bg);
+      padding: 32px 28px;
+      transition: background .2s;
+    }
+    .feat:hover { background: rgba(124,106,255,.06); }
+    .feat-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: rgba(124,106,255,.15); border: 1px solid rgba(124,106,255,.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; margin-bottom: 16px;
+    }
+    .feat h3 { font-size: .95rem; font-weight: 600; margin-bottom: 8px; }
+    .feat p { font-size: .85rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── Download ── */
+    #download { border-top: 1px solid var(--border); }
+    .dl-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+    }
+    .dl-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 32px 24px;
+      display: flex; flex-direction: column; align-items: center;
+      text-align: center; gap: 8px;
+      transition: border-color .2s, transform .2s;
+    }
+    .dl-card:hover { border-color: rgba(124,106,255,.4); transform: translateY(-2px); }
+    .dl-os { font-size: 2.2rem; margin-bottom: 4px; }
+    .dl-card h3 { font-size: 1.05rem; font-weight: 700; }
+    .dl-card p { font-size: .82rem; color: var(--muted); margin-bottom: 12px; }
+    .dl-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(124,106,255,.15); border: 1px solid rgba(124,106,255,.3);
+      color: #a89fff; padding: 9px 20px; border-radius: 8px;
+      font-size: .85rem; font-weight: 600; text-decoration: none;
+      transition: all .2s; width: 100%; justify-content: center;
+    }
+    .dl-btn:hover { background: rgba(124,106,255,.28); color: #fff; }
+
+    /* ── Usage ── */
+    #usage { border-top: 1px solid var(--border); }
+    .steps { display: flex; flex-direction: column; gap: 2px; margin-bottom: 56px; }
+    .step {
+      display: flex; gap: 20px; align-items: flex-start;
+      padding: 24px 28px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .step-n {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      background: rgba(124,106,255,.2); border: 1px solid rgba(124,106,255,.4);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: 700; color: #a89fff; margin-top: 2px;
+    }
+    .step h3 { font-size: .95rem; font-weight: 600; margin-bottom: 4px; }
+    .step p { font-size: .87rem; color: var(--muted); }
+    code {
+      background: rgba(255,255,255,.08); border: 1px solid var(--border);
+      padding: 1px 7px; border-radius: 5px; font-size: .85em;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+    .kbd-table { width: 100%; border-collapse: collapse; }
+    .kbd-table th {
+      text-align: left; padding: 10px 16px;
+      font-size: .78rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
+      color: var(--muted); border-bottom: 1px solid var(--border);
+    }
+    .kbd-table td { padding: 12px 16px; font-size: .88rem; border-bottom: 1px solid rgba(255,255,255,.04); }
+    .kbd-table tr:last-child td { border-bottom: none; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 32px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      color: var(--muted); font-size: .82rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--text); }
+
+    /* ── Lang ── */
+    .en { display: none; }
+    html[lang="en"] .zh { display: none; }
+    html[lang="en"] .en { display: revert; }
+
+    @media (max-width: 768px) {
+      nav { padding: 0 16px; }
+      .nav-right .nav-link { display: none; }
+      #hero { padding: 100px 16px 60px; }
+      .hero-actions { flex-direction: column; align-items: center; }
+      .btn-primary, .btn-ghost { width: 100%; max-width: 280px; justify-content: center; }
+      .features-grid { grid-template-columns: 1fr; }
+      .dl-grid { grid-template-columns: 1fr; }
+      footer { flex-direction: column; gap: 8px; text-align: center; padding: 24px 16px; }
+      section { padding: 64px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">
+    <img src="https://raw.githubusercontent.com/PengweeWang/translate/master/src-tauri/icons/128x128.png" alt="icon">
+    <span class="zh">划词翻译</span><span class="en">Translate</span>
+  </div>
+  <div class="nav-right">
+    <a href="#features" class="nav-link"><span class="zh">功能</span><span class="en">Features</span></a>
+    <a href="#download" class="nav-link"><span class="zh">下载</span><span class="en">Download</span></a>
+    <a href="#usage" class="nav-link"><span class="zh">使用</span><span class="en">Usage</span></a>
+    <a href="https://github.com/PengweeWang/translate" class="nav-link">GitHub</a>
+    <button id="lang-btn" onclick="toggleLang()">English</button>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section id="hero">
+  <div class="hero-glow"></div>
+  <div class="badge"><span class="zh">v0.3.3 · 现已发布</span><span class="en">v0.3.3 · Now Available</span></div>
+  <h1>
+    <span class="grad zh">选中即译</span>
+    <span class="grad en">Select & Translate</span>
+    <br>
+    <span class="zh" style="color:var(--muted);font-size:.55em;font-weight:600;letter-spacing:-.01em">AI 驱动的桌面翻译工具</span>
+    <span class="en" style="color:var(--muted);font-size:.55em;font-weight:600;letter-spacing:-.01em">AI-powered desktop translation</span>
+  </h1>
+  <p class="hero-sub zh">选中任意文字，按下快捷键，即刻获得流式 AI 翻译。支持 DeepSeek、豆包，公式完美渲染。</p>
+  <p class="hero-sub en">Select any text, press your hotkey, get instant streaming AI translation. Supports DeepSeek, Doubao, and LaTeX math.</p>
+  <div class="hero-actions">
+    <a href="#download" class="btn-primary">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span class="zh">立即下载</span><span class="en">Download</span>
+    </a>
+    <a href="https://github.com/PengweeWang/translate" class="btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      GitHub
+    </a>
+  </div>
+  <div class="hero-screenshot">
+    <div class="screenshot-glow"></div>
+    <img id="screenshot" src="display-dark.png" alt="App screenshot">
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features">
+  <div class="container">
+    <p class="section-label"><span class="zh">功能特性</span><span class="en">Features</span></p>
+    <h2><span class="zh">专为效率而生</span><span class="en">Built for Efficiency</span></h2>
+    <p class="section-desc zh">每一个细节都经过打磨，让翻译融入你的工作流。</p>
+    <p class="section-desc en">Every detail crafted to make translation invisible in your workflow.</p>
+    <div class="features-grid">
+      <div class="feat">
+        <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M10 14h4"/></svg></div>
+        <h3><span class="zh">全局快捷键</span><span class="en">Global Hotkey</span></h3>
+        <p><span class="zh">默认 Alt+F1，任意界面选中文字即可触发，无需切换应用。可在配置文件中自定义快捷键。</span><span class="en">Default Alt+F1 — trigger from any app without switching windows. Fully customizable in the config file.</span></p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
+        <h3><span class="zh">流式输出</span><span class="en">Streaming Output</span></h3>
+        <p><span class="zh">基于 SSE 实时渲染，翻译结果逐字呈现，无需等待。</span><span class="en">SSE-based real-time rendering — results stream in word by word.</span></p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 19V5a2 2 0 0 1 2-2h13a.5.5 0 0 1 0 1H6a1 1 0 0 0-1 1v14"/><path d="M8 8h8M8 12h6"/><path d="M15 17l2 2 4-4"/></svg></div>
+        <h3><span class="zh">公式渲染</span><span class="en">Math Rendering</span></h3>
+        <p><span class="zh">Markdown + KaTeX 完整支持，数学公式完美呈现。</span><span class="en">Full Markdown + KaTeX support for beautiful math formula rendering.</span></p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg></div>
+        <h3><span class="zh">多模型支持</span><span class="en">Multi-Model</span></h3>
+        <p><span class="zh">支持 DeepSeek 与火山引擎豆包，托盘菜单一键切换。</span><span class="en">DeepSeek and Volcengine Doubao, switchable from the system tray.</span></p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a7 7 0 0 1 7 7c0 4-3 6-4 8H9c-1-2-4-4-4-8a7 7 0 0 1 7-7z"/><path d="M9 21h6M10 17v-6l-2-2M14 17v-6l2-2M12 11V9"/></svg></div>
+        <h3><span class="zh">智能提示词</span><span class="en">Smart Prompts</span></h3>
+        <p><span class="zh">单词自动给出词典释义，短语与句子自动切换翻译模式。</span><span class="en">Single words get dictionary definitions; phrases get translations.</span></p>
+      </div>
+      <div class="feat">
+        <div class="feat-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></div>
+        <h3><span class="zh">自动更新</span><span class="en">Auto Update</span></h3>
+        <p><span class="zh">内置更新检测，新版本发布后自动提示，一键升级。</span><span class="en">Built-in update checker notifies you when a new version is available.</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Download -->
+<section id="download">
+  <div class="container">
+    <p class="section-label"><span class="zh">下载</span><span class="en">Download</span></p>
+    <h2><span class="zh">选择你的平台</span><span class="en">Choose Your Platform</span></h2>
+    <p class="section-desc zh">支持 Windows、macOS 和 Linux，开箱即用。</p>
+    <p class="section-desc en">Available for Windows, macOS, and Linux — ready to use out of the box.</p>
+    <div class="dl-grid">
+      <div class="dl-card">
+        <div class="dl-os"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg></div>
+        <h3>Windows</h3>
+        <p>x64 · Windows 10+</p>
+        <a href="https://github.com/PengweeWang/translate/releases/latest/download/translate_0.3.3_x64-setup.exe" class="dl-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="zh">下载 .exe</span><span class="en">Download .exe</span>
+        </a>
+      </div>
+      <div class="dl-card">
+        <div class="dl-os"><svg width="36" height="36" viewBox="0 0 24 24" fill="currentColor"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg></div>
+        <h3>macOS</h3>
+        <p>Apple Silicon · ARM64</p>
+        <a href="https://github.com/PengweeWang/translate/releases/latest/download/translate_0.3.3_aarch64.dmg" class="dl-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="zh">下载 .dmg</span><span class="en">Download .dmg</span>
+        </a>
+      </div>
+      <div class="dl-card">
+        <div class="dl-os"><svg xmlns="http://www.w3.org/2000/svg" height="40" width="40" viewBox="0 0 640 640"><!--!Font Awesome Free v7.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path fill="rgb(255, 255, 255)" d="M316.9 187.3C317.9 187.8 318.7 189 319.9 189C321 189 322.7 188.6 322.8 187.5C323 186.1 320.9 185.2 319.6 184.6C317.9 183.9 315.7 183.6 314.1 184.5C313.7 184.7 313.3 185.2 313.5 185.6C313.8 186.9 315.8 186.7 316.9 187.3zM295 189C296.2 189 297 187.8 298 187.3C299.1 186.7 301.1 186.9 301.5 185.7C301.7 185.3 301.3 184.8 300.9 184.6C299.3 183.7 297.1 184 295.4 184.7C294.1 185.3 292 186.2 292.2 187.6C292.3 188.6 294 189.1 295 189zM516 467.8C512.4 463.8 510.7 456.2 508.8 448.1C507 440 504.9 431.3 498.3 425.7C497 424.6 495.7 423.6 494.3 422.8C493 422 491.6 421.3 490.2 420.8C499.4 393.5 495.8 366.3 486.5 341.7C475.1 311.6 455.2 285.3 440 267.3C422.9 245.8 406.3 225.4 406.6 195.3C407.1 149.4 411.7 64.1 330.8 64C228.4 63.8 254 167.4 252.9 199.2C251.2 222.6 246.5 241 230.4 263.9C211.5 286.4 184.9 322.7 172.3 360.6C166.3 378.5 163.5 396.7 166.1 413.9C159.6 419.7 154.7 428.6 149.5 434.1C145.3 438.4 139.2 440 132.5 442.4C125.8 444.8 118.5 448.4 114 456.9C111.9 460.8 111.2 465 111.2 469.3C111.2 473.2 111.8 477.2 112.4 481.1C113.6 489.2 114.9 496.8 113.2 501.9C108 516.3 107.3 526.3 111 533.6C114.8 540.9 122.4 544.1 131.1 545.9C148.4 549.5 171.9 548.6 190.4 558.4C210.2 568.8 230.3 572.5 246.3 568.8C257.9 566.2 267.4 559.2 272.2 548.6C284.7 548.5 298.5 543.2 320.5 542C335.4 540.8 354.1 547.3 375.6 546.1C376.2 548.4 377 550.7 378.1 552.8L378.1 552.9C386.4 569.6 401.9 577.2 418.4 575.9C435 574.6 452.5 564.9 466.7 548C480.3 531.6 502.7 524.8 517.6 515.8C525 511.3 531 505.7 531.5 497.5C531.9 489.3 527.1 480.2 516 467.8zM319.8 151.3C329.6 129.1 354 129.5 363.8 150.9C370.3 165.1 367.4 181.8 359.5 191.3C357.9 190.5 353.6 188.7 346.9 186.4C348 185.2 350 183.7 350.8 181.8C355.6 170 350.6 154.8 341.7 154.5C334.4 154 327.8 165.3 329.9 177.5C325.8 175.5 320.5 174 316.9 173.1C315.9 166.2 316.6 158.5 319.8 151.3zM279.1 139.8C289.2 139.8 299.9 154 298.2 173.3C294.7 174.3 291.1 175.8 288 177.9C289.2 169 284.7 157.8 278.4 158.3C270 159 268.6 179.5 276.6 186.4C277.6 187.2 278.5 186.2 270.7 191.9C255.1 177.3 260.2 139.8 279.1 139.8zM265.5 200.5C271.7 195.9 279.1 190.5 279.6 190C284.3 185.6 293.1 175.8 307.5 175.8C314.6 175.8 323.1 178.1 333.4 184.7C339.7 188.8 344.7 189.1 356 194C364.4 197.5 369.7 203.7 366.5 212.2C363.9 219.3 355.5 226.6 343.8 230.3C332.7 233.9 324 246.3 305.6 245.2C301.7 245 298.6 244.2 296 243.1C288 239.6 283.8 232.7 276 228.1C267.4 223.3 262.8 217.7 261.3 212.8C259.9 207.9 261.3 203.8 265.5 200.5zM268.8 534.5C266.1 569.6 224.9 568.9 193.5 552.5C163.6 536.7 124.9 546 117 530.6C114.6 525.9 114.6 517.9 119.6 504.2L119.6 504C122 496.4 120.2 488 119 480.1C117.8 472.3 117.2 465.1 119.9 460.1C123.4 453.4 128.4 451 134.7 448.8C145 445.1 146.5 445.4 154.3 438.9C159.8 433.2 163.8 426 168.6 420.9C173.7 415.4 178.6 412.8 186.3 414C194.4 415.2 201.4 420.8 208.2 430L227.8 465.6C237.3 485.5 270.9 514 268.8 534.5zM267.4 508.6C263.3 502 257.8 495 253 489C260.1 489 267.2 486.8 269.7 480.1C272 473.9 269.7 465.2 262.3 455.2C248.8 437 224 422.7 224 422.7C210.5 414.3 202.9 404 199.4 392.8C195.9 381.6 196.4 369.5 199.1 357.6C204.3 334.7 217.7 312.4 226.3 298.4C228.6 296.7 227.1 301.6 217.6 319.2C209.1 335.3 193.2 372.5 215 401.6C215.6 380.9 220.5 359.8 228.8 340.1C240.8 312.7 266.1 265.2 268.1 227.4C269.2 228.2 272.7 230.6 274.3 231.5C278.9 234.2 282.4 238.2 286.9 241.8C299.3 251.8 315.4 251 329.3 243C335.5 239.5 340.5 235.5 345.2 234C355.1 230.9 363 225.4 367.5 219C375.2 249.4 393.2 293.3 404.7 314.7C410.8 326.1 423 350.2 428.3 379.3C431.6 379.2 435.3 379.7 439.2 380.7C453 345 427.5 306.5 415.9 295.8C411.2 291.2 411 289.2 413.3 289.3C425.9 300.5 442.5 323 448.5 348.3C451.3 359.9 451.8 372 448.9 384C465.3 390.8 484.8 401.9 479.6 418.8C477.4 418.7 476.4 418.8 475.4 418.8C478.6 408.7 471.5 401.2 452.6 392.7C433 384.1 416.6 384.1 414.3 405.2C402.2 409.4 396 419.9 392.9 432.5C390.1 443.7 389.3 457.2 388.5 472.4C388 480.1 384.9 490.4 381.7 501.4C349.6 524.3 305 534.3 267.4 508.6zM524.8 497.1C523.9 513.9 483.6 517 461.6 543.6C448.4 559.3 432.2 568 418 569.1C403.8 570.2 391.5 564.3 384.3 549.8C379.6 538.7 381.9 526.7 385.4 513.5C389.1 499.3 394.6 484.7 395.3 472.9C396.1 457.7 397 444.4 399.5 434.2C402.1 423.9 406.1 417 413.2 413.1C413.5 412.9 413.9 412.8 414.2 412.6C415 425.8 421.5 439.2 433 442.1C445.6 445.4 463.7 434.6 471.4 425.8C480.4 425.5 487.1 424.9 494 430.9C503.9 439.4 501.1 461.2 511.1 472.5C521.7 484.1 525.1 492 524.8 497.1zM269.4 212.7C271.4 214.6 274.1 217.2 277.4 219.8C284 225 293.2 230.4 304.7 230.4C316.3 230.4 327.2 224.5 336.5 219.6C341.4 217 347.4 212.6 351.3 209.2C355.2 205.8 357.2 202.9 354.4 202.6C351.6 202.3 351.8 205.2 348.4 207.7C344 210.9 338.7 215.1 334.5 217.5C327.1 221.7 315 227.7 304.6 227.7C294.2 227.7 285.9 222.9 279.7 218C276.6 215.5 274 213 272 211.1C270.5 209.7 270.1 206.5 267.7 206.2C266.3 206.1 265.9 209.9 269.4 212.7z"/></svg></div>
+        <h3>Linux</h3>
+        <p>x64 · AppImage</p>
+        <a href="https://github.com/PengweeWang/translate/releases/latest/download/translate_0.3.3_amd64.AppImage" class="dl-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span class="zh">下载 .AppImage</span><span class="en">Download .AppImage</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Usage -->
+<section id="usage">
+  <div class="container">
+    <p class="section-label"><span class="zh">快速开始</span><span class="en">Quick Start</span></p>
+    <h2><span class="zh">三步上手</span><span class="en">Up in Three Steps</span></h2>
+    <p class="section-desc zh">从安装到第一次翻译，不超过两分钟。</p>
+    <p class="section-desc en">From install to first translation in under two minutes.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-n">1</div>
+        <div>
+          <h3><span class="zh">安装并启动</span><span class="en">Install &amp; Launch</span></h3>
+          <p><span class="zh">下载对应平台安装包，安装后启动，图标出现在系统托盘。</span><span class="en">Download the installer for your platform — after launch, the icon appears in the system tray.</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">2</div>
+        <div>
+          <h3><span class="zh">配置 API Key</span><span class="en">Set API Key</span></h3>
+          <p><span class="zh">编辑 <code>~/.local/translate/config.toml</code>，填入 DeepSeek 或豆包的 API Key。</span><span class="en">Edit <code>~/.local/translate/config.toml</code> and add your DeepSeek or Doubao API key.</span></p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-n">3</div>
+        <div>
+          <h3><span class="zh">选中文字，按下快捷键</span><span class="en">Select Text &amp; Press Hotkey</span></h3>
+          <p><span class="zh">选中任意文字，按 <code>Alt+F1</code>，翻译窗口即刻弹出。</span><span class="en">Select any text, press <code>Alt+F1</code>, and the translation window pops up instantly.</span></p>
+        </div>
+      </div>
+    </div>
+
+    <table class="kbd-table">
+      <thead>
+        <tr>
+          <th><span class="zh">快捷键</span><span class="en">Shortcut</span></th>
+          <th><span class="zh">功能</span><span class="en">Action</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code>Alt+F1</code></td><td><span class="zh">触发翻译</span><span class="en">Trigger translation</span></td></tr>
+        <tr><td><code>Esc</code></td><td><span class="zh">关闭翻译窗口</span><span class="en">Close translation window</span></td></tr>
+        <tr><td><code><span class="zh">Alt + 拖拽</span><span class="en">Alt + Drag</span></code></td><td><span class="zh">移动翻译窗口</span><span class="en">Move translation window</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>
+  <span>© 2025 PengweeWang · MIT License · v0.3.3</span>
+  <span>
+    <a href="https://github.com/PengweeWang/translate">GitHub</a>
+  </span>
+</footer>
+
+<script>
+  function toggleLang() {
+    const html = document.documentElement;
+    const toEn = html.lang !== 'en';
+    html.lang = toEn ? 'en' : 'zh';
+    document.getElementById('lang-btn').textContent = toEn ? '中文' : 'English';
+  }
+
+</script>
+</body>
+</html>

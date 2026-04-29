@@ -335,4 +335,4 @@ npm run tauri build -- --target x86_64-pc-windows-msvc
 
 ## 开发踩坑
 
-> 详见 [docs/pitfalls.md](docs/pitfalls.md)
+> 详见 [pitfalls.md](./pitfalls.md)
