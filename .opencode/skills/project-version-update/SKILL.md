@@ -67,8 +67,56 @@ description: 根据git提交历史和语义化版本控制规则更新项目版�
 
 ## 步骤5：生成提交信息
 
-根据 Conventional Commits 规范生成提交信息，格式如下：
+### 5.1 格式规范
 
+```
+<type>: <description>
+```
+
+- 使用 **英文** 编写
+- 第一行不超过 60 个字符
+- type 使用小写：feat, fix, docs, chore, refactor 等
+- 通常不使用 scope
+
+### 5.2 常用 type
+
+- `feat`: 新功能、版本升级
+- `fix`: bug 修复
+- `docs`: 文档更新
+- `chore`: 其他杂项（配置、工具等）
+- `refactor`: 重构
+
+### 5.3 description 编写
+
+使用祈使句，简洁描述：
+
+**版本升级**：
+- `bump v0.6.0, add dialog plugin and prompt update`
+- `bump v0.5.1, fix CSS url() resolution for themes`
+
+**功能/修复**：
+- `add new translation engine`
+- `fix memory leak in parser`
+- `update version to v0.5.1 in index.html`
+
+**杂项**：
+- `nouse`
+- `remove unused files`
+
+### 5.4 示例
+
+```
+feat: bump v0.6.0, add dialog plugin and prompt update
+
+fix: update version to v0.5.1 in index.html
+
+docs: update version to v0.5.1 in index.html
+
+chore: nouse
+
+feat!: 重构 LLM 请求为 system/user 分离消息格式
+
+BREAKING CHANGE: 消息格式变更为分离的 system/user 结构
 ```
 <type>[scope]: <description>
 
