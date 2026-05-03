@@ -123,20 +123,24 @@ BREAKING CHANGE: environment variables now take precedence over config files
 ## 步骤6：执行提交
 
 1. 运行 `git add -A` 添加所有更改
+
 2. 展示commit信息（必须使用引用块与其他内容区分）：
    > \<type\> [optional scope]: <description>
    >
    >  [optional body]
    >
    >  [optional footer(s)]
+
 3. 使用 `question` 工具询问用户："是否确认提交？"，选项为：
    - 是：确认提交
    - 否：取消提交
    这一步`question` 工具会自动添加"Type your own answer"的选项
+
 4. 根据用户选择：
    - 如果用户选择"是"：运行 `git commit -m "提交信息"` 创建提交
    - 如果用户选择"否"：取消提交，结束任务
-   - 如果用户选择"Type your own answer"，提供了修改意见，重新生成提交信息，重复步骤2-3
+   - 如果用户选择"Type your own answer"，提供了修改意见，重新生成提交信息并展示，重复步骤2-3
+
 5. **不要运行 git push**
 
 ## 注意事项
