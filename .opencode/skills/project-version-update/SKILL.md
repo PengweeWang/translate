@@ -122,7 +122,8 @@ BREAKING CHANGE: 消息格式变更为分离的 system/user 结构
 ## 步骤6：执行提交
 
 1. 运行 `git add -A` 添加所有更改
-2. 展示commit信息
+2. 展示commit信息（使用引用块与其他内容区分）：
+   > <type>: <description>
 3. 使用 `question` 工具询问用户："是否确认提交？"，选项为：
    - 是：确认提交
    - 否：取消提交
