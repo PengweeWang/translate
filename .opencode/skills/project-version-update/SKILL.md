@@ -76,7 +76,7 @@ description: 根据git提交历史和语义化版本控制规则更新项目版�
 - 使用 **英文** 编写
 - 第一行不超过 60 个字符
 - type 使用小写：feat, fix, docs, chore, refactor 等
-- 通常不使用 scope
+
 
 ### 5.2 常用 type
 
@@ -117,81 +117,6 @@ chore: nouse
 feat!: 重构 LLM 请求为 system/user 分离消息格式
 
 BREAKING CHANGE: 消息格式变更为分离的 system/user 结构
-```
-<type>[scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
-### 5.1 确定 type（类型）
-
-根据变更内容选择合适的类型：
-- `feat`: 新功能
-- `fix`: 修复bug
-- `docs`: 文档更新
-- `style`: 代码格式（不影响功能的修改）
-- `refactor`: 重构
-- `perf`: 性能优化
-- `test`: 测试
-- `build`: 构建系统或依赖更新
-- `ci`: CI配置文件和脚本
-- `chore`: 其他不修改源代码或测试文件的更改
-
-### 5.2 确定 scope（可选）
-
-添加作用域，描述变更影响的范围，如：
-- `feat(cli):` - 命令行工具
-- `fix(ui):` - 用户界面
-- `docs(readme):` - 文档
-
-### 5.3 编写 description（描述）
-
-简短描述，不超过50个字符，使用祈使句，如：
-- `add new translation engine`
-- `fix memory leak in parser`
-- `update dependencies`
-
-### 5.4 编写 body（可选）
-
-如果需要更多说明，添加正文：
-- 说明"为什么"进行此变更
-- 说明"如何"实现（可选）
-- 每段不超过72个字符
-
-### 5.5 编写 footer（可选）
-
-如有 breaking change 或关联 issue：
-- `BREAKING CHANGE: <description>` - 破坏性变更
-- `Closes #123` - 关闭issue
-- `Refs #456` - 关联issue
-
-### 示例
-
-仅版本升级：
-```
-feat: bump version to v0.5.1
-
-Release v0.5.1 with bug fixes and performance improvements.
-```
-
-版本升级 + 其他变更：
-```
-feat: bump version to v0.5.1
-
-Release v0.5.1 with the following changes:
-- fix: resolve CSS url() resolution in themes
-- perf: improve translation loading speed
-
-Closes #42
-```
-
-如有 breaking change：
-```
-feat!: drop support for Node.js 12
-
-BREAKING CHANGE: minimum Node.js version is now 14.
 ```
 
 ## 步骤6：执行提交
