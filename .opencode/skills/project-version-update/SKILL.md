@@ -69,68 +69,74 @@ description: 根据git提交历史和语义化版本控制规则更新项目版�
 
 ### 5.1 格式规范
 
-```
-<type>: <description>
-```
-
-- 使用 **英文** 编写
-- 第一行不超过 60 个字符
-- type 使用小写：feat, fix, docs, chore, refactor 等
-
-
-### 5.2 常用 type
-
-- `feat`: 新功能、版本升级
-- `fix`: bug 修复
-- `docs`: 文档更新
-- `chore`: 其他杂项（配置、工具等）
-- `refactor`: 重构
-
-### 5.3 description 编写
-
-使用祈使句，简洁描述：
-
-**版本升级**：
-- `bump v0.6.0, add dialog plugin and prompt update`
-- `bump v0.5.1, fix CSS url() resolution for themes`
-
-**功能/修复**：
-- `add new translation engine`
-- `fix memory leak in parser`
-- `update version to v0.5.1 in index.html`
-
-**杂项**：
-- `nouse`
-- `remove unused files`
-
-### 5.4 示例
+根据 [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.0/) 规范，提交信息格式如下：
 
 ```
-feat: bump v0.6.0, add dialog plugin and prompt update
+<type>[optional scope][!]: <description>
 
-fix: update version to v0.5.1 in index.html
+[optional body]
 
-docs: update version to v0.5.1 in index.html
-
-chore: nouse
-
-feat!: 重构 LLM 请求为 system/user 分离消息格式
-
-BREAKING CHANGE: 消息格式变更为分离的 system/user 结构
+[optional footer(s)]
 ```
+
+**格式说明：**
+
+1. **type（必需）**：提交类型，常见类型包括：
+   - `feat`: 新功能（对应 MINOR 版本升级）
+   - `fix`:  bug 修复（对应 PATCH 版本升级）
+   - `docs`: 文档更新
+   - `style`: 代码格式调整（不影响功能）
+   - `refactor`: 代码重构
+   - `perf`: 性能优化
+   - `test`: 测试相关
+   - `chore`: 构建过程或辅助工具变动
+   - `ci`: CI 配置文件或脚本更新
+   - `build`: 构建系统或外部依赖变更
+
+2. **scope（可选）**：范围，用括号包围，描述变更影响的模块，如 `feat(parser):`
+
+3. **`!`（可选）**：用于标记 breaking change，如 `feat(api)!:` 或 `fix!:`，表示 API 不兼容变更
+
+4. **description（必需）**：简短描述，不超过 50 个字符，用动词开头（如 add, fix, update, remove 等）
+
+5. **body（可选）**：详细说明，与描述之间空一行
+
+6. **footer（可选）**：脚注，用于标注 breaking change 或关联 issue
+   - `BREAKING CHANGE: <description>`：标注不兼容变更
+   - `Refs: #123`：关联 issue
+   - `Reviewed-by: Z`：代码审查者
+
+**示例：**
+
+```
+feat: add new translation feature
+
+feat(parser): add ability to parse arrays
+
+fix: prevent racing of requests
+
+BREAKING CHANGE: environment variables now take precedence over config files
+```
+
+
 
 ## 步骤6：执行提交
 
 1. 运行 `git add -A` 添加所有更改
-2. 展示commit信息（使用引用块与其他内容区分）：
-   > <type>: <description>
+2. 展示commit信息（必须使用引用块与其他内容区分）：
+   > \<type\> [optional scope]: <description>
+   >
+   >  [optional body]
+   >
+   >  [optional footer(s)]
 3. 使用 `question` 工具询问用户："是否确认提交？"，选项为：
    - 是：确认提交
    - 否：取消提交
+   这一步`question` 工具会自动添加"Type your own answer"的选项
 4. 根据用户选择：
    - 如果用户选择"是"：运行 `git commit -m "提交信息"` 创建提交
    - 如果用户选择"否"：取消提交，结束任务
-   - 如果用户选择"Type your own answer"：让用户提供修改意见，重新生成提交信息，重复步骤2-3
+   - 如果用户选择"Type your own answer"，提供了修改意见，重新生成提交信息，重复步骤2-3
 5. **不要运行 git push**
 
 ## 注意事项
@@ -138,3 +144,4 @@ BREAKING CHANGE: 消息格式变更为分离的 system/user 结构
 - 工作区有未提交的修改时，先分析这些修改是否需要版本升级，再决定如何处理
 - 如果版本号不需要更新，只需生成符合规范的提交信息即可，不需要修改文件
 - 步骤6只对需要版本升级的更新执行，如果只是分析则不需要执行提交
+- 严禁在没有得到是的回答时commit
