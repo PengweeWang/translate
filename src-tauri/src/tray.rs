@@ -1,8 +1,10 @@
 use crate::config;
 use std::sync::{Arc, Mutex};
 use tauri::menu::MenuItem;
-use tauri::menu::{CheckMenuItemBuilder, MenuBuilder, SubmenuBuilder};
+use tauri::menu::{CheckMenuItem, CheckMenuItemBuilder, MenuBuilder, SubmenuBuilder};
 use tauri::tray::TrayIconBuilder;
+use tauri::Emitter;
+use tauri::Wry;
 
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
@@ -31,10 +33,9 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
     let shortcut_item = MenuItem::with_id(app, "shortcut", shortcut_text, true, None::<&str>)?;
 
     // 获取当前选中的模型
-    let current_model = config::read_or_create_config()
-        .unwrap_or_default()
-        .select
-        .llm;
+    let config = config::read_or_create_config().unwrap_or_default();
+    let current_model = config.select.llm.clone();
+    let current_theme = config.select.theme.clone();
 
     // 创建带勾选状态的模型项
     let deepseek_check_item = CheckMenuItemBuilder::new("DeepSeek")
@@ -71,9 +72,25 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
         .item(&doubao_check_item)
         .build()?;
 
+    // 动态构建 Theme 子菜单
+    let themes = config::list_themes();
+    let mut theme_items: Vec<CheckMenuItem<Wry>> = Vec::new();
+    let mut theme_builder = SubmenuBuilder::new(app, "Theme");
+    for name in &themes {
+        let label = if name.is_empty() { "Default" } else { name.as_str() };
+        let item = CheckMenuItemBuilder::new(label)
+            .id(format!("theme_{}", name))
+            .checked(*name == current_theme)
+            .build(app)?;
+        theme_builder = theme_builder.item(&item);
+        theme_items.push(item);
+    }
+    let theme_submenu = theme_builder.build()?;
+
     let main_menu = MenuBuilder::new(app)
         .item(&config_item)
         .item(&model_submenu)
+        .item(&theme_submenu)
         .item(&shortcut_item)
         .item(&auto_update_item)
         .item(&check_update_item)
@@ -87,6 +104,7 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
     let doubao_check_clone = doubao_check_item.clone();
     let autostart_enable_item_clone = autostart_enable_item.clone();
     let auto_update_item_clone = auto_update_item.clone();
+    let theme_items_clone = theme_items.clone();
 
     // 创建托盘图标并绑定菜单事件
     let _tray = TrayIconBuilder::new()
@@ -162,7 +180,18 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
                 });
             }
             _ => {
-                println!("menu item {:?} not handled", event.id);
+                let id = event.id.as_ref();
+                if id.starts_with("theme_") {
+                    let name = &id["theme_".len()..];
+                    let _ = config::switch_theme(name);
+                    for item in &theme_items_clone {
+                        let item_name = item.id().as_ref().strip_prefix("theme_").unwrap_or("");
+                        let _ = item.set_checked(item_name == name);
+                    }
+                    let _ = app.emit("theme-changed", name.to_string());
+                } else {
+                    println!("menu item {:?} not handled", event.id);
+                }
             }
         })
         .build(app)?;

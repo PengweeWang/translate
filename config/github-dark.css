@@ -1,0 +1,216 @@
+/*
+Name: Github Dark style
+Adapted for translate app: all selectors scoped to #write
+*/
+
+:root {
+  --bg-color: #0d1117;
+  --text-color: #e6edf3;
+  --dragbar-bg: #161b22;
+  --dragbar-border: #30363d;
+  --dragbar-hover: #21262d;
+  --dragbar-icon-color: #e6edf3;
+}
+
+#write {
+  font-family: "Helvetica Neue", Helvetica, "Segoe UI", Arial, freesans, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol";
+  font-size: 16px;
+  line-height: 1.6;
+  word-wrap: break-word;
+  color: #e6edf3;
+  background-color: #0d1117;
+}
+
+#write > *:first-child { margin-top: 0 !important }
+#write > *:last-child { margin-bottom: 0 !important }
+
+#write .absent { color: #f85149 }
+
+#write .anchor {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  display: block;
+  padding-right: 6px;
+  padding-left: 30px;
+  margin-left: -30px
+}
+
+#write .anchor:focus { outline: none }
+
+#write h1, #write h2, #write h3,
+#write h4, #write h5, #write h6 {
+  position: relative;
+  margin-top: 1em;
+  margin-bottom: 16px;
+  font-weight: bold;
+  line-height: 1.4;
+  color: #e6edf3;
+}
+
+#write h1 .octicon-link, #write h2 .octicon-link,
+#write h3 .octicon-link, #write h4 .octicon-link,
+#write h5 .octicon-link, #write h6 .octicon-link {
+  display: none; color: #e6edf3; vertical-align: middle
+}
+
+#write h1:hover .anchor, #write h2:hover .anchor,
+#write h3:hover .anchor, #write h4:hover .anchor,
+#write h5:hover .anchor, #write h6:hover .anchor {
+  height: 1em; padding-left: 8px; margin-left: -30px;
+  line-height: 1; text-decoration: none
+}
+
+#write h1:hover .anchor .octicon-link,
+#write h2:hover .anchor .octicon-link,
+#write h3:hover .anchor .octicon-link,
+#write h4:hover .anchor .octicon-link,
+#write h5:hover .anchor .octicon-link,
+#write h6:hover .anchor .octicon-link { display: inline-block }
+
+#write h1 tt, #write h1 code, #write h2 tt, #write h2 code,
+#write h3 tt, #write h3 code, #write h4 tt, #write h4 code,
+#write h5 tt, #write h5 code, #write h6 tt, #write h6 code { font-size: inherit }
+
+#write h1 {
+  padding-bottom: 0.3em; font-size: 2.25em;
+  line-height: 1.2; border-bottom: 1px solid #21262d
+}
+
+#write h2 {
+  padding-bottom: 0.3em; font-size: 1.75em;
+  line-height: 1.225; border-bottom: 1px solid #21262d
+}
+
+#write h3 { font-size: 1.5em; line-height: 1.43 }
+#write h4 { font-size: 1.25em }
+#write h5 { font-size: 1em }
+#write h6 { font-size: 1em; color: #8b949e }
+
+#write p, #write blockquote, #write ul, #write ol,
+#write dl, #write table, #write pre {
+  margin-top: 0; margin-bottom: 16px
+}
+
+#write hr {
+  height: 4px; padding: 0; margin: 16px 0;
+  background-color: #21262d; border: 0 none
+}
+
+#write ul, #write ol { padding-left: 2em }
+
+#write ul.no-list, #write ol.no-list { padding: 0; list-style-type: none }
+
+#write ul ul, #write ul ol,
+#write ol ol, #write ol ul { margin-top: 0; margin-bottom: 0 }
+
+#write li > p { margin-top: 16px }
+
+#write dl { padding: 0 }
+
+#write dl dt {
+  padding: 0; margin-top: 16px;
+  font-size: 1em; font-style: italic; font-weight: bold
+}
+
+#write dl dd { padding: 0 16px; margin-bottom: 16px }
+
+#write blockquote {
+  padding: 0 15px; color: #8b949e; border-left: 4px solid #30363d
+}
+
+#write blockquote > :first-child { margin-top: 0 }
+#write blockquote > :last-child { margin-bottom: 0 }
+
+#write table { display: block; width: 100%; overflow: auto; word-break: keep-all }
+
+#write table th { font-weight: bold }
+
+#write table th, #write table td {
+  padding: 6px 13px; border: 1px solid #30363d
+}
+
+#write table tr { background-color: #0d1117; border-top: 1px solid #21262d }
+
+#write table tr:nth-child(2n) { background-color: #161b22 }
+
+#write img { max-width: 100%; box-sizing: border-box }
+
+#write span.frame { display: block; overflow: hidden }
+
+#write span.frame > span {
+  display: block; float: left; width: auto;
+  padding: 7px; margin: 13px 0 0; overflow: hidden; border: 1px solid #30363d
+}
+
+#write span.frame span img { display: block; float: left }
+
+#write span.frame span span {
+  display: block; padding: 5px 0 0; clear: both; color: #e6edf3
+}
+
+#write span.align-center { display: block; overflow: hidden; clear: both }
+#write span.align-center > span {
+  display: block; margin: 13px auto 0; overflow: hidden; text-align: center
+}
+#write span.align-center span img { margin: 0 auto; text-align: center }
+
+#write span.align-right { display: block; overflow: hidden; clear: both }
+#write span.align-right > span {
+  display: block; margin: 13px 0 0; overflow: hidden; text-align: right
+}
+#write span.align-right span img { margin: 0; text-align: right }
+
+#write span.float-left { display: block; float: left; margin-right: 13px; overflow: hidden }
+#write span.float-left span { margin: 13px 0 0 }
+
+#write span.float-right { display: block; float: right; margin-left: 13px; overflow: hidden }
+#write span.float-right > span {
+  display: block; margin: 13px auto 0; overflow: hidden; text-align: right
+}
+
+#write code, #write tt {
+  padding: 0.2em 0.4em; margin: 0;
+  font-size: 85%; background-color: rgba(110,118,129,0.4); border-radius: 3px
+}
+
+#write code:before, #write code:after,
+#write tt:before, #write tt:after { letter-spacing: -0.2em; content: "\00a0" }
+
+#write code br, #write tt br { display: none }
+
+#write del code { text-decoration: inherit; vertical-align: text-top }
+
+#write pre > code {
+  padding: 0; margin: 0; font-size: 100%;
+  word-break: normal; white-space: pre; background: transparent; border: 0
+}
+
+#write .highlight { margin-bottom: 16px }
+
+#write .highlight pre, #write pre {
+  padding: 16px; overflow: auto; font-size: 85%;
+  line-height: 1.45; background-color: #161b22; border-radius: 3px
+}
+
+#write .highlight pre { margin-bottom: 0; word-break: normal }
+#write pre { word-wrap: normal }
+
+#write pre code, #write pre tt {
+  display: inline; max-width: initial; padding: 0; margin: 0;
+  overflow: initial; line-height: inherit; word-wrap: normal;
+  background-color: transparent; border: 0
+}
+
+#write pre code:before, #write pre code:after,
+#write pre tt:before, #write pre tt:after { content: normal }
+
+#write a { color: #58a6ff; text-decoration: none }
+#write a:hover, #write a:focus, #write a:active { text-decoration: underline }
+
+#write hr, #write .rule {
+  height: 0; margin: 15px 0; overflow: hidden;
+  background: transparent; border: 0; border-bottom: 1px solid #30363d
+}
+
+#write hr:before, #write .rule:before { display: table; content: "" }
+#write hr:after, #write .rule:after { display: table; clear: both; content: "" }

@@ -14,6 +14,7 @@
 - **配置管理** — 配置文件位于 `~/.local/translate/config.toml`，支持通过系统编辑器直接编辑
 - **配置自动升级** — 新版新增配置字段时自动填充默认值并更新文件，无需手动迁移
 - **自动更新** — 启动时自动检查 GitHub Releases 新版本，支持托盘手动检查和开关
+- **自定义主题** — 将 CSS 文件放入 `~/.local/translate/theme/` 目录，托盘 Theme 菜单实时切换，兼容 Typora 主题格式
 
 ## 使用教程
 
@@ -48,6 +49,7 @@
 | Auto Update | 开启/关闭启动时自动检查更新 |
 | Check for Updates | 手动检查新版本 |
 | Autostart | 开机自启（切换后即时生效） |
+| Theme | 切换主题（实时生效） |
 | Quit | 完全退出应用 |
 
 ### 智能 Prompt 切换
@@ -58,6 +60,25 @@
 - **句子/短语**（多个词片段）→ 使用翻译模版
 
 可在配置文件 `config.toml` 中自定义 `word_prompt` 和 `sentence_prompt`，模板中使用 `${text}` 占位。
+
+### 自定义主题
+
+将 `.css` 文件放入 `~/.local/translate/theme/` 目录，重启应用后在托盘 **Theme** 菜单中选择，切换后立即生效。
+
+主题 CSS 使用 `#write` 选择器（兼容 Typora 主题），通过覆盖 `:root` CSS 变量控制界面色彩：
+
+```css
+:root {
+  --bg-color: #ffffff;          /* 内容区背景 */
+  --text-color: #333333;        /* 内容区文字 */
+  --dragbar-bg: #f6f8fa;        /* 标题栏背景 */
+  --dragbar-border: #e1e4e8;    /* 标题栏分隔线 */
+  --dragbar-hover: #eaecef;     /* 标题栏 hover */
+  --dragbar-icon-color: #24292e;/* 按钮图标颜色 */
+}
+```
+
+内置示例主题：`config/github-light.css`、`config/github-dark.css`。
 
 ## 开发
 
@@ -86,5 +107,5 @@ npm run tauri build
 
 - [ ] 更加完善的错误处理
 - [ ] 更多 API 支持（OpenAI、Claude 等）
-- [ ] 自定义主题 / 配色
+- [x] 自定义主题 / 配色
 - [ ] 翻译历史记录

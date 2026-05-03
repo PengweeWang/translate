@@ -11,6 +11,8 @@ pub struct SelectConfig {
     pub llm: String,
     /// 全局快捷键（格式如 "Alt+F1", "Ctrl+Shift+A"）
     pub shortcut: String,
+    /// 当前主题名（空字符串 = 默认内置主题）
+    pub theme: String,
     /// 单词 prompt 模板（当检测到输入为单个英文单词时使用）
     pub word_prompt: String,
     /// 句子 prompt 模板（当检测到输入为短语/句子/段落时使用）
@@ -74,6 +76,7 @@ impl Default for SelectConfig {
         Self {
             llm: "deepseek".to_string(),
             shortcut: default_shortcut(),
+            theme: String::new(),
             word_prompt: default_word_prompt(),
             sentence_prompt: default_sentence_prompt(),
         }
@@ -218,6 +221,48 @@ pub fn update_shortcut(shortcut: &str) -> Result<(), String> {
     std::fs::write(&config_path, toml_content)
         .map_err(|e| format!("Failed to write config file: {}", e))?;
 
+    Ok(())
+}
+
+/// 获取主题目录路径：~/.local/translate/theme/
+pub fn get_theme_dir() -> PathBuf {
+    let mut path = dirs::home_dir().expect("Failed to get home directory");
+    path.push(".local/translate/theme");
+    path
+}
+
+/// 列出可用主题名（不含扩展名），空字符串排首位代表默认主题
+pub fn list_themes() -> Vec<String> {
+    let mut themes = vec![String::new()];
+    let dir = get_theme_dir();
+    if let Ok(entries) = fs::read_dir(&dir) {
+        let mut names: Vec<String> = entries
+            .filter_map(|e| e.ok())
+            .filter_map(|e| {
+                let p = e.path();
+                if p.extension()?.to_str()? == "css" {
+                    p.file_stem()?.to_str().map(|s| s.to_string())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        names.sort();
+        themes.extend(names);
+    }
+    themes
+}
+
+/// 切换当前主题
+pub fn switch_theme(theme_name: &str) -> Result<(), String> {
+    let mut config =
+        read_or_create_config().map_err(|e| format!("Failed to read config: {}", e))?;
+    config.select.theme = theme_name.to_string();
+    let config_path = get_config_path();
+    let toml_content = toml::to_string_pretty(&config)
+        .map_err(|e| format!("Failed to serialize config: {}", e))?;
+    std::fs::write(&config_path, toml_content)
+        .map_err(|e| format!("Failed to write config file: {}", e))?;
     Ok(())
 }
 

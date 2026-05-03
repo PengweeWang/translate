@@ -1,10 +1,19 @@
+:root {
+  --bg-color: #2a2a2a;
+  --text-color: #ffffff;
+  --dragbar-bg: #282525;
+  --dragbar-border: #444444;
+  --dragbar-hover: #383838;
+  --dragbar-icon-color: #ffffff;
+}
+
 html, body {
   height: 100%;
   width: 100%;
   margin: 0;
   padding: 0;
   overflow: hidden; /* 阻止页面级滚动 */
-  background-color: #2a2a2a;
+  background-color: var(--bg-color);
   border-radius: 10px;
 }
 
@@ -12,8 +21,8 @@ html, body {
   width: 100%;
   height: 22px;
   box-sizing: border-box;
-  background-color: #282525;
-  border-bottom: 1px solid #444444;
+  background-color: var(--dragbar-bg);
+  border-bottom: 1px solid var(--dragbar-border);
   cursor: grab;
   user-select: none;
   z-index: 999;
@@ -21,21 +30,22 @@ html, body {
   transition: background-color 0.2s ease;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* 两端对齐 */
-  padding: 0 8px; /* 左右留间距 */
+  justify-content: space-between;
+  padding: 0 8px;
+  border-radius: 10px 10px 0 0;
 }
 #dragbar:active {
   cursor: grabbing;
 }
 #dragbar:hover {
-  background-color: #383838;
+  background-color: var(--dragbar-hover);
 }
 
 /* 关闭按钮核心样式 */
 #close-btn {
   width: 20px;
   height: 20px;
-  color: #ffffff;
+  color: var(--dragbar-icon-color);
   font-size: 16px;
   line-height: 18px;
   text-align: center;
@@ -43,97 +53,90 @@ html, body {
   user-select: none;
   transition: background-color 0.2s ease;
   padding: 0;
-  border-radius: 2px; 
+  border-radius: 2px;
 }
 #close-btn:hover {
-  background-color: #ff3838;
+  background-color: rgba(255, 50, 50, 0.7);
 }
 #close-btn:active {
-  background-color: #ff0000;
-  color: #ffffff;
+  background-color: rgba(255, 0, 0, 0.85);
 }
 
 /* Top按钮样式 */
 #top-btn {
   width: 20px;
   height: 20px;
-  color: #ffffff;
+  color: var(--dragbar-icon-color);
   font-size: 16px;
   line-height: 18px;
   text-align: center;
   cursor: pointer;
   user-select: none;
-  transition: all 0.2s ease; 
-  border-radius: 2px; 
+  transition: all 0.2s ease;
+  border-radius: 2px;
 }
-
 #top-btn:hover {
-  background-color: #38ff5d33; 
+  background-color: rgba(50, 220, 80, 0.3);
 }
 /* 置顶激活状态 */
 #top-btn.active {
-  background-color: #38ff5d; 
-  color: #000; 
+  background-color: rgba(50, 220, 80, 0.75);
 }
 #top-btn.active svg path {
-  fill: rgb(0, 0, 0); /* 强制图标颜色跟随激活状态 */
+  fill: currentColor;
 }
 /* 点击反馈 */
 #top-btn:active {
-  background-color: #4dff00;
-  color: #ffffff;
+  background-color: rgba(50, 220, 80, 0.9);
 }
 
-#translate-content {
+#write {
   box-sizing: border-box;
   margin: 0;
   padding: 10px;
   padding-top: 5px;
   padding-bottom: 22px;
   width: 100%;
-  height: 100%; 
+  height: 100%;
   text-align: left;
-  background-color: #2a2a2a;
-  color: white;
+  background-color: var(--bg-color);
+  color: var(--text-color);
   overflow-y: auto;
-  overflow-x: hidden; 
+  overflow-x: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
   overflow-wrap: break-word;
   white-space: normal;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  line-height: 1.6;
+  border-radius: 0 0 10px 10px;
 }
 
-#translate-content::-webkit-scrollbar {
+#write::-webkit-scrollbar {
   display: none;
 }
 
-/* markdown样式 */
-#translate-content {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.6;
-}
-
-#translate-content h1, 
-#translate-content h2, 
-#translate-content h3, 
-#translate-content h4 {
+#write h1,
+#write h2,
+#write h3,
+#write h4 {
   margin-bottom: 0.5em;
   font-weight: 600;
   margin: 0;
 }
 
-#translate-content p {
+#write p {
   margin-bottom: 1em;
   margin: 0;
 }
 
-#translate-content ul, 
-#translate-content ol {
+#write ul,
+#write ol {
   margin-left: 0.5em;
   margin-bottom: 0.5em;
 }
 
-#translate-content code {
+#write code {
   background-color: #1b1a1a;
   padding: 2px 4px;
   border-radius: 3px;
@@ -141,7 +144,7 @@ html, body {
   font-size: 0.9em;
 }
 
-#translate-content pre {
+#write pre {
   background-color: #555555;
   padding: 1em;
   border-radius: 5px;
@@ -149,26 +152,26 @@ html, body {
   margin-bottom: 1em;
 }
 
-#translate-content blockquote {
+#write blockquote {
   border-left: 4px solid #2a2a2a;
   padding-left: 1em;
   margin-left: 0;
   color: #ffffff;
 }
 
-#translate-content strong {
+#write strong {
   font-weight: 600;
 }
 
-#translate-content em {
+#write em {
   font-style: italic;
 }
 
-#translate-content a {
+#write a {
   color: #0366d6;
   text-decoration: none;
 }
 
-#translate-content a:hover {
+#write a:hover {
   text-decoration: underline;
 }

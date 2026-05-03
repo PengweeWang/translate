@@ -57,6 +57,22 @@ pub async fn get_translate_prompt(text: String) -> Result<TranslatePrompt, Strin
     })
 }
 
+/// 返回指定主题的 CSS 内容，空字符串主题名返回 None（使用内置样式）
+#[tauri::command]
+pub async fn get_theme_css(theme_name: String) -> Result<Option<String>, String> {
+    if theme_name.is_empty() {
+        return Ok(None);
+    }
+    let mut path = config::get_theme_dir();
+    path.push(format!("{}.css", theme_name));
+    let css = match std::fs::read_to_string(&path) {
+        Ok(content) => content,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) => return Err(format!("Failed to read theme: {}", e)),
+    };
+    Ok(Some(css))
+}
+
 /// 设置自定义快捷键（格式如 "Alt+F1", "Ctrl+Shift+A"）
 #[tauri::command]
 pub async fn set_shortcut(

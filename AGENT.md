@@ -4,7 +4,7 @@
 
 **Translate**（划词翻译）是一个基于 Tauri 2 的桌面划词翻译应用，通过可自定义的全局快捷键（默认 Alt+F1）获取屏幕选中文本，利用 LLM API（DeepSeek / 豆包）进行流式翻译，结果展示在无边框悬浮面板中。
 
-- **版本**：0.4.0
+- **版本**：0.5.0
 - **标识符**：`com.translate.qiumo`
 - **作者**：PengWee Wang
 - **主要平台**：Windows（交叉编译），支持 Linux / macOS
@@ -259,6 +259,7 @@ thinking = "disabled"
 9. **开机自启动**
 10. **请求取消**：新翻译自动取消前次未完成的请求
 11. **自定义快捷键**：通过配置文件 `shortcut` 字段或 `set_shortcut` 命令动态修改，支持 Alt/Ctrl/Shift/Super + 按键组合
+12. **自定义主题**：支持将 CSS 主题文件放入 `~/.local/translate/theme/` 目录，托盘菜单实时切换，兼容 Typora 主题格式（`#write` 选择器）
 
 ---
 
@@ -301,6 +302,39 @@ npm run tauri build -- --target x86_64-pc-windows-msvc
 ---
 
 ## 扩展指南
+
+### 自定义主题
+
+主题文件为 CSS 文件，放置于 `~/.local/translate/theme/` 目录，重启应用后在托盘 Theme 菜单中可选。
+
+**CSS 变量（在 `:root` 中覆盖）**：
+
+| 变量 | 说明 |
+|------|------|
+| `--bg-color` | 内容区背景色 |
+| `--text-color` | 内容区文字颜色 |
+| `--dragbar-bg` | 标题栏背景色 |
+| `--dragbar-border` | 标题栏底部分隔线颜色 |
+| `--dragbar-hover` | 标题栏 hover 背景色 |
+| `--dragbar-icon-color` | 按钮图标颜色 |
+
+**内容样式**：使用 `#write` 选择器，兼容 Typora 主题格式。
+
+最小主题示例：
+```css
+:root {
+  --bg-color: #ffffff;
+  --text-color: #333333;
+  --dragbar-bg: #f6f8fa;
+  --dragbar-border: #e1e4e8;
+  --dragbar-hover: #eaecef;
+  --dragbar-icon-color: #24292e;
+}
+
+#write { color: #333; background-color: #fff; }
+```
+
+内置示例主题位于 `config/github-light.css` 和 `config/github-dark.css`。
 
 ### 添加新的 LLM 提供商
 

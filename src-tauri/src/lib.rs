@@ -81,6 +81,7 @@ pub fn run() {
             commands::start_drag,
             commands::get_config,
             commands::get_translate_prompt,
+            commands::get_theme_css,
             commands::set_shortcut,
         ])
         .run(tauri::generate_context!())

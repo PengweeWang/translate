@@ -48,7 +48,7 @@ async function translateText(text) {
   }
   currentAbortController = new AbortController();
 
-  const Dom = document.getElementById("translate-content");
+  const Dom = document.getElementById("write");
   Dom.innerHTML = "";
   fullMarkdownContent = "";
 
@@ -116,7 +116,7 @@ async function translateText(text) {
 
 // Markdown渲染函数
 async function renderMarkdownWithMath(content) {
-  const Dom = document.getElementById("translate-content");
+  const Dom = document.getElementById("write");
 
   if (typeof marked !== 'undefined') {
     try {
@@ -163,7 +163,7 @@ async function renderIncrementalMarkdown(newContent) {
 
 
 async function main() {
-  const Dom = document.getElementById("translate-content");
+  const Dom = document.getElementById("write");
 
   const unlisten = await listen('get_text', async (event) => {
     const originalText = event.payload;
@@ -179,7 +179,29 @@ async function main() {
   window.unlistenTranslate = unlisten;
 }
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener("DOMContentLoaded", async () => {
+  // 加载用户主题
+  async function applyTheme(themeName) {
+    const existing = document.getElementById('user-theme');
+    if (existing) existing.remove();
+    try {
+      const css = await invoke('get_theme_css', { themeName });
+      if (css) {
+        const style = document.createElement('style');
+        style.id = 'user-theme';
+        style.textContent = css;
+        document.head.appendChild(style);
+      }
+    } catch (e) {
+      console.warn('Failed to load theme:', e);
+    }
+  }
+
+  const config = await invoke('get_config').catch(() => null);
+  if (config) await applyTheme(config.select.theme);
+
+  listen('theme-changed', (event) => applyTheme(event.payload));
+
   main();
 
   const closeBtn = document.getElementById("close-btn");
