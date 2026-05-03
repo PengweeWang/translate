@@ -80,6 +80,8 @@
 
 内置示例主题：`config/github-light.css`、`config/github-dark.css`。
 
+`docs/theme/` 目录下提供 12 款预置主题，修改自 [imageslr/mweb-themes](https://github.com/imageslr/mweb-themes)，感谢其对本项目的贡献。
+
 ## 开发
 
 ```bash

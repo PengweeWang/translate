@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>主题预览 · Translate</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #060608; --surface: rgba(255,255,255,.04);
+      --border: rgba(255,255,255,.08); --accent: #7c6aff;
+      --text: #f0f0f5; --muted: #7a7a8c;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+    }
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 40px; height: 56px;
+      background: rgba(6,6,8,.85); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: .95rem; text-decoration: none; color: var(--text); }
+    .nav-logo img { width: 26px; height: 26px; border-radius: 6px; }
+    .nav-back { color: var(--muted); font-size: .85rem; text-decoration: none; transition: color .2s; }
+    .nav-back:hover { color: var(--text); }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 60px 24px 80px; }
+    h1 { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: 8px; }
+    .subtitle { color: var(--muted); margin-bottom: 48px; font-size: .95rem; }
+    .subtitle code {
+      background: rgba(255,255,255,.08); border: 1px solid var(--border);
+      padding: 1px 7px; border-radius: 5px; font-size: .85em;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    /* 模拟应用窗口 */
+    .window {
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+      border: 1px solid rgba(255,255,255,.06);
+      transition: transform .2s, box-shadow .2s;
+    }
+    .window:hover { transform: translateY(-3px); box-shadow: 0 16px 48px rgba(0,0,0,.6); }
+
+    .dragbar {
+      height: 22px; display: flex; align-items: center;
+      justify-content: space-between; padding: 0 8px;
+      border-radius: 10px 10px 0 0;
+    }
+    .dragbar-btn { width: 14px; height: 14px; border-radius: 2px; opacity: .7; }
+
+    .write-area {
+      padding: 10px; font-size: 13px; line-height: 1.6;
+      min-height: 160px;
+    }
+    .write-area h2 { font-size: 1em; font-weight: 600; margin-bottom: 6px; }
+    .write-area p { margin-bottom: 6px; font-size: .88em; }
+    .write-area code {
+      padding: 1px 5px; border-radius: 3px; font-size: .85em;
+      font-family: Menlo, monospace;
+    }
+    .write-area blockquote {
+      padding-left: 8px; margin: 6px 0; font-size: .88em; opacity: .85;
+    }
+    .write-area ul { margin-left: 16px; font-size: .88em; }
+
+    .theme-label {
+      padding: 6px 10px; font-size: .78rem; font-weight: 600;
+      letter-spacing: .04em; text-align: center;
+      border-top: 1px solid rgba(255,255,255,.06);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .theme-dl {
+      font-size: .72rem; font-weight: 400; opacity: .6;
+      text-decoration: none; color: inherit;
+      transition: opacity .2s;
+    }
+    .theme-dl:hover { opacity: 1; }
+    .credit {
+      margin-top: 56px; padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: .82rem; color: var(--muted); text-align: center;
+    }
+    .credit a { color: var(--muted); text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      nav { padding: 0 16px; }
+      main { padding: 40px 16px 60px; }
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <img src="https://raw.githubusercontent.com/PengweeWang/translate/master/src-tauri/icons/128x128.png" alt="icon">
+    划词翻译
+  </a>
+  <a href="index.html" class="nav-back">← 返回首页</a>
+</nav>
+
+<main>
+  <h1>主题预览</h1>
+  <p class="subtitle">将 CSS 文件放入 <code>~/.local/translate/theme/</code>，托盘菜单即可切换主题。</p>
+
+  <div class="grid" id="grid"></div>
+  <div class="credit">
+    主题样式基于 <a href="https://github.com/imageslr/mweb-themes" target="_blank">imageslr/mweb-themes</a> 修改适配，遵循原项目许可证。
+  </div>
+</main>
+
+<script>
+const themes = [
+  {
+    name: "Dracula",       file: "mweb-dracula",
+    bg: "#353846", text: "#ffffff", heading: "#50fa7b",
+    dbg: "#2c2f3e", dborder: "#454859", icon: "#ffffff",
+    codebg: "#1f202a", codetext: "#f9f9f5", codeborder: "rgba(187,145,248,.4)",
+    blockquote: "#cdaef9", bullet: "#cdaef9",
+  },
+  {
+    name: "Gotham",        file: "mweb-gotham",
+    bg: "#11151c", text: "#6aa9b9", heading: "#2eb88c",
+    dbg: "#0d1118", dborder: "#1e2a38", icon: "#6aa9b9",
+    codebg: "#0a1722", codetext: "#599cab", codeborder: "#122a3f",
+    blockquote: "#2aa889", bullet: "#2aa889",
+  },
+  {
+    name: "Nord",          file: "mweb-nord",
+    bg: "#2f3440", text: "#edeef3", heading: "#d9dde7",
+    dbg: "#272c36", dborder: "#3d4455", icon: "#edeef3",
+    codebg: "#363945", codetext: "#edeef3", codeborder: "rgba(144,185,201,.3)",
+    blockquote: "#90b9c9", bullet: "#90b9c9",
+  },
+  {
+    name: "Cobalt",        file: "mweb-cobalt",
+    bg: "#142738", text: "#dbf0ef", heading: "#d3c845",
+    dbg: "#0f1f2d", dborder: "#1c3549", icon: "#dbf0ef",
+    codebg: "#152d3e", codetext: "#dbf0ef", codeborder: "rgba(252,133,30,.3)",
+    blockquote: "#fc851e", bullet: "#fc851e",
+  },
+  {
+    name: "Lighthouse",    file: "mweb-lighthouse",
+    bg: "#18181e", text: "#fdfae0", heading: "#fbef89",
+    dbg: "#131318", dborder: "#222230", icon: "#fdfae0",
+    codebg: "#1b1a22", codetext: "#fdfae0", codeborder: "rgba(209,95,38,.3)",
+    blockquote: "#d15f26", bullet: "#d15f26",
+  },
+  {
+    name: "Solarized Dark", file: "mweb-solarized-dark",
+    bg: "#0b3742", text: "#9ba6a4", heading: "#abb5b4",
+    dbg: "#082e38", dborder: "#0f4a58", icon: "#9ba6a4",
+    codebg: "#062128", codetext: "#9ba6a4", codeborder: "rgba(44,146,133,.3)",
+    blockquote: "#2c9285", bullet: "#2c9285",
+  },
+  {
+    name: "Ayu Mirage",    file: "mweb-ayu-mirage",
+    bg: "#1f232f", text: "#d9d7d1", heading: "#9faab9",
+    dbg: "#191c26", dborder: "#2b3040", icon: "#d9d7d1",
+    codebg: "#181c25", codetext: "#d9d7d1", codeborder: "rgba(254,203,102,.3)",
+    blockquote: "#fecb66", bullet: "#fecb66",
+  },
+  {
+    name: "Panic",         file: "mweb-panic",
+    bg: "#111c2a", text: "#f6f7ee", heading: "#f9b537",
+    dbg: "#0d1620", dborder: "#182436", icon: "#f6f7ee",
+    codebg: "#172134", codetext: "#f6f7ee", codeborder: "rgba(249,181,55,.3)",
+    blockquote: "#f9b537", bullet: "#f9b537",
+  },
+  {
+    name: "Toothpaste",    file: "mweb-toothpaste",
+    bg: "#222e33", text: "#dce3e8", heading: "#83d1dd",
+    dbg: "#1a2328", dborder: "#2d3d44", icon: "#dce3e8",
+    codebg: "#12181b", codetext: "#a8b0b5", codeborder: "#0f1517",
+    blockquote: "#c7bf7f", bullet: "#c7bf7f",
+  },
+  {
+    name: "Dark Graphite", file: "mweb-dark-graphite",
+    bg: "#1e2022", text: "#dddddd", heading: "#cbdbe5",
+    dbg: "#181a1b", dborder: "#2a2c2e", icon: "#dddddd",
+    codebg: "#242424", codetext: "#dddddd", codeborder: "rgba(74,168,251,.3)",
+    blockquote: "#4aa8fb", bullet: "#4aa8fb",
+  },
+  {
+    name: "Charcoal",      file: "mweb-charcoal",
+    bg: "#2e3235", text: "#a6a6a6", heading: "#acacac",
+    dbg: "#272a2c", dborder: "#3a3e41", icon: "#a6a6a6",
+    codebg: "#2f3337", codetext: "#a6a6a6", codeborder: "rgba(155,183,196,.3)",
+    blockquote: "#9bb7c4", bullet: "#9bb7c4",
+  },
+  {
+    name: "Dieci",         file: "mweb-dieci",
+    bg: "#000000", text: "#d4d4d4", heading: "#fcce23",
+    dbg: "#0a0a0a", dborder: "#1a1a1a", icon: "#d4d4d4",
+    codebg: "#101010", codetext: "#d4d4d4", codeborder: "rgba(242,148,41,.3)",
+    blockquote: "#f29429", bullet: "#f29429",
+  },
+];
+
+const grid = document.getElementById('grid');
+
+themes.forEach(t => {
+  grid.innerHTML += `
+  <div class="window">
+    <div class="dragbar" style="background:${t.dbg};border-bottom:1px solid ${t.dborder}">
+      <div class="dragbar-btn" style="background:${t.icon}"></div>
+      <div class="dragbar-btn" style="background:${t.icon}"></div>
+    </div>
+    <div class="write-area" style="background:${t.bg};color:${t.text}">
+      <h2 style="color:${t.heading}">## translate <em style="color:${t.text};font-size:.85em;font-weight:400">单词</em></h2>
+      <p><strong>v.</strong> 翻译；转化；移动</p>
+      <p><strong>n.</strong> 翻译；译文</p>
+      <blockquote style="border-left:3px solid ${t.blockquote}">
+        Can you <em>translate</em> this sentence?
+      </blockquote>
+      <ul style="list-style:none;padding-left:1em">
+        <li style="position:relative"><span style="position:absolute;left:-1em;color:${t.bullet}">•</span>translate A into B</li>
+        <li style="position:relative"><span style="position:absolute;left:-1em;color:${t.bullet}">•</span><code style="background:${t.codebg};color:${t.codetext};border:1px solid ${t.codeborder};padding:1px 4px;border-radius:3px">machine translation</code></li>
+      </ul>
+    </div>
+    <div class="theme-label" style="background:${t.dbg};color:${t.text}">
+      <span>${t.name}</span>
+      <a class="theme-dl" href="theme/${t.file}.css" download="${t.file}.css">↓ CSS</a>
+    </div>
+  </div>`;
+});
+</script>
+</body>
+</html>

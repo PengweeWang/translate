@@ -58,6 +58,7 @@ pub async fn get_translate_prompt(text: String) -> Result<TranslatePrompt, Strin
 }
 
 /// 返回指定主题的 CSS 内容，空字符串主题名返回 None（使用内置样式）
+/// 将 CSS 中的相对 url() 替换为绝对 file:// 路径，使 @font-face 等能正常加载
 #[tauri::command]
 pub async fn get_theme_css(theme_name: String) -> Result<Option<String>, String> {
     if theme_name.is_empty() {
@@ -70,7 +71,41 @@ pub async fn get_theme_css(theme_name: String) -> Result<Option<String>, String>
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(e) => return Err(format!("Failed to read theme: {}", e)),
     };
+    let theme_dir = config::get_theme_dir();
+    let css = resolve_css_urls(css, &theme_dir);
     Ok(Some(css))
+}
+
+fn resolve_css_urls(css: String, base_dir: &std::path::Path) -> String {
+    let mut result = String::with_capacity(css.len());
+    let mut rest = css.as_str();
+    while let Some(start) = rest.find("url(") {
+        result.push_str(&rest[..start]);
+        rest = &rest[start + 4..];
+        let quote = if rest.starts_with('"') || rest.starts_with('\'') {
+            &rest[..1]
+        } else {
+            ""
+        };
+        let inner = &rest[quote.len()..];
+        let end = if quote.is_empty() {
+            inner.find(')').unwrap_or(inner.len())
+        } else {
+            inner.find(quote).unwrap_or(inner.len())
+        };
+        let url = inner[..end].trim();
+        let close_len = quote.len() + end + quote.len() + 1;
+        if url.starts_with("http://") || url.starts_with("https://") || url.starts_with("file://") || url.starts_with("data:") {
+            result.push_str("url(");
+            result.push_str(&rest[..close_len]);
+        } else {
+            let abs = base_dir.join(url);
+            result.push_str(&format!("url({}{}{})", quote, abs.to_string_lossy().replace('\\', "/"), quote));
+        }
+        rest = &rest[close_len..];
+    }
+    result.push_str(rest);
+    result
 }
 
 /// 设置自定义快捷键（格式如 "Alt+F1", "Ctrl+Shift+A"）
