@@ -59,7 +59,7 @@
 - **单词**（Unicode 分词后仅 1 个含字母的片段，支持多语言）→ 使用词典释义模版
 - **句子/短语**（多个词片段）→ 使用翻译模版
 
-可在配置文件 `config.toml` 中自定义 `word_prompt` 和 `sentence_prompt`，模板中使用 `${text}` 占位。
+可在配置文件 `config.toml` 中自定义 `word_prompt` 和 `sentence_prompt`。
 
 ### 自定义主题
 
@@ -111,3 +111,4 @@ npm run tauri build
 - [ ] 更多 API 支持（OpenAI、Claude 等）
 - [x] 自定义主题 / 配色
 - [ ] 翻译历史记录
+- [ ] 支持图片翻译

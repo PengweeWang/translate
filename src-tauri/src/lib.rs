@@ -7,7 +7,6 @@ mod windows;
 
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
-use tauri_plugin_updater::UpdaterExt;
 use tray::AppState;
 use windows::panel;
 
@@ -15,6 +14,7 @@ use windows::panel;
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
@@ -55,21 +55,7 @@ pub fn run() {
             if auto_update {
                 let handle = handle.clone();
                 tauri::async_runtime::spawn(async move {
-                    if let Ok(updater) = handle.updater() {
-                        match updater.check().await {
-                            Ok(Some(update)) => {
-                                if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
-                                    eprintln!("Failed to install update: {}", e);
-                                }
-                            }
-                            Ok(None) => {
-                                println!("No update available");
-                            }
-                            Err(e) => {
-                                eprintln!("Update check failed: {}", e);
-                            }
-                        }
-                    }
+                    tray::check_and_prompt_update(&handle, true).await;
                 });
             }
 

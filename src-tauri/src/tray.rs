@@ -7,8 +7,51 @@ use tauri::Emitter;
 use tauri::Wry;
 
 use tauri_plugin_autostart::ManagerExt;
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 use tauri_plugin_global_shortcut::GlobalShortcutExt;
 use tauri_plugin_updater::UpdaterExt;
+
+pub async fn check_and_prompt_update(app: &tauri::AppHandle, silent: bool) {
+    let updater = match app.updater() {
+        Ok(u) => u,
+        Err(_) => return,
+    };
+    let update = match updater.check().await {
+        Ok(Some(u)) => u,
+        Ok(None) => {
+            if !silent {
+                app.dialog().message("已是最新版本").title("检查更新").show(|_| {});
+            }
+            return;
+        }
+        Err(e) => {
+            eprintln!("Update check failed: {}", e);
+            return;
+        }
+    };
+
+    let version = update.version.clone();
+    let notes = update.body.clone().unwrap_or_default();
+    let msg = format!("New version {} is available.\n\n{}\n\nInstall now?", version, notes);
+
+    let (tx, rx) = std::sync::mpsc::channel::<bool>();
+    app.dialog()
+        .message(msg)
+        .title("Update Available")
+        .buttons(MessageDialogButtons::OkCancelCustom(
+            "Install".to_string(),
+            "Later".to_string(),
+        ))
+        .show(move |confirmed| {
+            let _ = tx.send(confirmed);
+        });
+
+    if rx.recv().unwrap_or(false) {
+        if let Err(e) = update.download_and_install(|_, _| {}, || {}).await {
+            eprintln!("Failed to install update: {}", e);
+        }
+    }
+}
 
 /// 应用共享状态
 pub struct AppState {
@@ -164,19 +207,7 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
             "check_update" => {
                 let app = app.clone();
                 tauri::async_runtime::spawn(async move {
-                    if let Ok(updater) = app.updater() {
-                        match updater.check().await {
-                            Ok(Some(update)) => {
-                                let _ = update.download_and_install(|_, _| {}, || {}).await;
-                            }
-                            Ok(None) => {
-                                println!("No update available");
-                            }
-                            Err(e) => {
-                                eprintln!("Update check failed: {}", e);
-                            }
-                        }
-                    }
+                    check_and_prompt_update(&app, false).await;
                 });
             }
             _ => {
