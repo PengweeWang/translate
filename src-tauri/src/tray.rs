@@ -58,6 +58,7 @@ pub struct AppState {
     pub shortcut_enabled: bool,
     pub shortcut_key: String,
     pub auto_update_enabled: bool,
+    pub mouse_stop: Option<std::sync::Arc<std::sync::atomic::AtomicBool>>,
 }
 
 /// 初始化系统托盘图标及菜单
@@ -165,11 +166,18 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
                 s.shortcut_enabled = !s.shortcut_enabled;
 
                 if s.shortcut_enabled {
-                    // 启用：注册快捷键
-                    let _ = app.global_shortcut().register(&*s.shortcut_key);
+                    if crate::mouse_shortcut::is_mouse_shortcut(&s.shortcut_key) {
+                        let stop = crate::mouse_shortcut::start(app.clone(), &s.shortcut_key);
+                        s.mouse_stop = Some(stop);
+                    } else {
+                        let _ = app.global_shortcut().register(&*s.shortcut_key);
+                    }
                 } else {
-                    // 禁用：注销快捷键
-                    let _ = app.global_shortcut().unregister(&*s.shortcut_key);
+                    if let Some(flag) = s.mouse_stop.take() {
+                        flag.store(true, std::sync::atomic::Ordering::Relaxed);
+                    } else {
+                        let _ = app.global_shortcut().unregister(&*s.shortcut_key);
+                    }
                 }
 
                 let new_text = if s.shortcut_enabled {

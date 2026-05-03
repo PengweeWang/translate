@@ -1,5 +1,6 @@
 mod commands;
 mod config;
+mod mouse_shortcut;
 mod prompt;
 mod shortcut;
 mod tray;
@@ -13,6 +14,12 @@ use windows::panel;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(panel) = app.get_webview_window("panel") {
+                let _ = panel.show();
+                let _ = panel.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
@@ -34,6 +41,7 @@ pub fn run() {
                 shortcut_enabled: true,
                 shortcut_key: shortcut_key.clone(),
                 auto_update_enabled: auto_update,
+                mouse_stop: None,
             }));
 
             // 初始化托盘菜单
@@ -44,8 +52,12 @@ pub fn run() {
 
             #[cfg(desktop)]
             {
-                // 设置全局快捷键
-                shortcut::setup_shortcut(app, &shortcut_key)?;
+                if mouse_shortcut::is_mouse_shortcut(&shortcut_key) {
+                    let stop = mouse_shortcut::start(app.handle().clone(), &shortcut_key);
+                    state.lock().unwrap().mouse_stop = Some(stop);
+                } else {
+                    shortcut::setup_shortcut(app, &shortcut_key)?;
+                }
             }
 
             // 将共享状态注入 Tauri 管理

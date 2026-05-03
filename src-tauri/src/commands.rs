@@ -132,7 +132,7 @@ pub async fn set_shortcut(
     {
         let enabled = state.lock().unwrap().shortcut_enabled;
         if enabled {
-            shortcut::reregister_shortcut(&app, &old_shortcut, &shortcut_str)?;
+            shortcut::reregister_shortcut(&app, &old_shortcut, &shortcut_str, &state)?;
         }
     }
 

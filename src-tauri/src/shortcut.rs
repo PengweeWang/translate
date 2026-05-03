@@ -1,4 +1,7 @@
+use crate::mouse_shortcut;
+use crate::tray::AppState;
 use selection::get_text;
+use std::sync::{atomic::Ordering, Arc, Mutex};
 use tauri::Emitter;
 use tauri::Manager;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
@@ -38,14 +41,21 @@ pub fn reregister_shortcut(
     app: &tauri::AppHandle,
     old_shortcut_str: &str,
     new_shortcut_str: &str,
+    state: &Arc<Mutex<AppState>>,
 ) -> Result<(), String> {
-    // 注销旧快捷键（忽略失败，可能旧快捷键格式不正确）
-    let _ = app.global_shortcut().unregister(old_shortcut_str);
-
-    // 注册新快捷键
-    app.global_shortcut()
-        .register(new_shortcut_str)
-        .map_err(|e| format!("Failed to register shortcut '{}': {}", new_shortcut_str, e))?;
-
+    if let Some(flag) = state.lock().unwrap().mouse_stop.take() {
+        flag.store(true, Ordering::Relaxed);
+    }
+    if !mouse_shortcut::is_mouse_shortcut(old_shortcut_str) {
+        let _ = app.global_shortcut().unregister(old_shortcut_str);
+    }
+    if mouse_shortcut::is_mouse_shortcut(new_shortcut_str) {
+        let stop = mouse_shortcut::start(app.clone(), new_shortcut_str);
+        state.lock().unwrap().mouse_stop = Some(stop);
+    } else {
+        app.global_shortcut()
+            .register(new_shortcut_str)
+            .map_err(|e| format!("Failed to register shortcut '{}': {}", new_shortcut_str, e))?;
+    }
     Ok(())
 }
