@@ -82,6 +82,10 @@
 
 `docs/theme/` 目录下提供 12 款预置主题，修改自 [imageslr/mweb-themes](https://github.com/imageslr/mweb-themes)，感谢其对本项目的贡献。
 
+## 架构
+
+![architecture](./docs/architecture.svg)
+
 ## 开发
 
 ```bash
