@@ -1,6 +1,44 @@
-# Translate
+<h1 align="center">
+  <br>
+  <img src="./docs/icon.png" alt="Translate" width="150">
+  <br>
+  <sub><sup><b>Translate</b></sup></sub>
+</h1>
+
+
+<p align="center">
+    <a href="https://github.com/PengweeWang/translate" target="_blank" style="margin-right: 20px; font-style: normal; text-decoration: none;">
+        <img src="https://img.shields.io/github/stars/PengweeWang/translate" alt="Github Stars" />
+    </a>
+    <a href="https://github.com/PengweeWang/translate" target="_blank" style="margin-right: 20px; font-style: normal; text-decoration: none;">
+        <img src="https://img.shields.io/github/forks/PengweeWang/translate" alt="Github Forks" />
+    </a>
+    <a href="https://github.com/PengweeWang/translate" target="_blank" style="margin-right: 20px; font-style: normal; text-decoration: none;">
+        <img src="https://img.shields.io/github/languages/code-size/PengweeWang/translate" alt="Code-size" />
+    </a>
+    <a href="https://github.com/PengweeWang/translate">
+        <img src="https://img.shields.io/github/v/release/PengweeWang/translate"
+            alt="Latest Release">
+    </a>
+</p>
+
+## Overview
 
 基于 Tauri v2 的划词翻译桌面应用，支持 DeepSeek / 豆包大模型 API，流式输出 Markdown 渲染。
+
+### 架构
+
+![architecture](./docs/architecture.svg)
+
+### 技术栈
+
+| 层 | 技术 |
+|---|------|
+| 桌面框架 | Tauri v2 (Rust) |
+| 前端 | 原生 JavaScript + HTML + CSS |
+| Markdown 渲染 | marked |
+| 公式渲染 | KaTeX (本地) |
+| 大模型 API | DeepSeek API / 火山引擎 Ark API |
 
 ## 功能
 
@@ -78,13 +116,10 @@
 }
 ```
 
-内置示例主题：`config/github-light.css`、`config/github-dark.css`。
 
 `docs/theme/` 目录下提供 12 款预置主题，修改自 [imageslr/mweb-themes](https://github.com/imageslr/mweb-themes)，感谢其对本项目的贡献。
 
-## 架构
 
-![architecture](./docs/architecture.svg)
 
 ## 开发
 
@@ -99,15 +134,7 @@ npm run tauri dev
 npm run tauri build
 ```
 
-### 技术栈
 
-| 层 | 技术 |
-|---|------|
-| 桌面框架 | Tauri v2 (Rust) |
-| 前端 | 原生 JavaScript + HTML + CSS |
-| Markdown 渲染 | marked |
-| 公式渲染 | KaTeX (本地) |
-| 大模型 API | DeepSeek API / 火山引擎 Ark API |
 
 ## Todo
 
