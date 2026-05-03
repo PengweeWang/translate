@@ -67,18 +67,95 @@ description: 根据git提交历史和语义化版本控制规则更新项目版�
 
 ## 步骤5：生成提交信息
 
-根据变更类型生成 Conventional Commits 格式的提交信息：
-- 如果是版本升级：`feat: bump v{major}.{minor}.{patch}`
-- 如果还修复了其他问题，在同一提交中说明
+根据 Conventional Commits 规范生成提交信息，格式如下：
 
-示例：
-- `feat: bump v0.5.1, fix CSS url() resolution for themes`
+```
+<type>[scope]: <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### 5.1 确定 type（类型）
+
+根据变更内容选择合适的类型：
+- `feat`: 新功能
+- `fix`: 修复bug
+- `docs`: 文档更新
+- `style`: 代码格式（不影响功能的修改）
+- `refactor`: 重构
+- `perf`: 性能优化
+- `test`: 测试
+- `build`: 构建系统或依赖更新
+- `ci`: CI配置文件和脚本
+- `chore`: 其他不修改源代码或测试文件的更改
+
+### 5.2 确定 scope（可选）
+
+添加作用域，描述变更影响的范围，如：
+- `feat(cli):` - 命令行工具
+- `fix(ui):` - 用户界面
+- `docs(readme):` - 文档
+
+### 5.3 编写 description（描述）
+
+简短描述，不超过50个字符，使用祈使句，如：
+- `add new translation engine`
+- `fix memory leak in parser`
+- `update dependencies`
+
+### 5.4 编写 body（可选）
+
+如果需要更多说明，添加正文：
+- 说明"为什么"进行此变更
+- 说明"如何"实现（可选）
+- 每段不超过72个字符
+
+### 5.5 编写 footer（可选）
+
+如有 breaking change 或关联 issue：
+- `BREAKING CHANGE: <description>` - 破坏性变更
+- `Closes #123` - 关闭issue
+- `Refs #456` - 关联issue
+
+### 示例
+
+仅版本升级：
+```
+feat: bump version to v0.5.1
+
+Release v0.5.1 with bug fixes and performance improvements.
+```
+
+版本升级 + 其他变更：
+```
+feat: bump version to v0.5.1
+
+Release v0.5.1 with the following changes:
+- fix: resolve CSS url() resolution in themes
+- perf: improve translation loading speed
+
+Closes #42
+```
+
+如有 breaking change：
+```
+feat!: drop support for Node.js 12
+
+BREAKING CHANGE: minimum Node.js version is now 14.
+```
 
 ## 步骤6：执行提交
 
 1. 运行 `git add -A` 添加所有更改
-2. 向用户展示生成的提交信息，等待用户确认
-3. 用户确认后，运行 `git commit -m "提交信息"` 创建提交
+2. 使用 `question` 工具询问用户："是否确认提交？"，选项为：
+   - 是：确认提交
+   - 否：取消提交
+3. 根据用户选择：
+   - 如果用户选择"是"：运行 `git commit -m "提交信息"` 创建提交
+   - 如果用户选择"否"：取消提交，结束任务
+   - 如果用户选择"Type your own answer"：让用户提供修改意见，重新生成提交信息，重复步骤2-3
 4. **不要运行 git push**
 
 ## 注意事项
