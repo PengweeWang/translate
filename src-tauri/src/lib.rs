@@ -47,6 +47,14 @@ pub fn run() {
             // 初始化托盘菜单
             tray::init_tray(app, state.clone())?;
 
+            // 先检查更新，完成后再注册快捷键
+            if auto_update {
+                let handle = handle.clone();
+                tauri::async_runtime::block_on(async move {
+                    tray::check_and_prompt_update(&handle, true).await;
+                });
+            }
+
             // 创建 panel 窗口
             panel(&handle.clone());
 
@@ -62,14 +70,6 @@ pub fn run() {
 
             // 将共享状态注入 Tauri 管理
             app.manage(state);
-
-            // 启动时自动检查更新
-            if auto_update {
-                let handle = handle.clone();
-                tauri::async_runtime::spawn(async move {
-                    tray::check_and_prompt_update(&handle, true).await;
-                });
-            }
 
             Ok(())
         })
