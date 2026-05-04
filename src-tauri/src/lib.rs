@@ -64,7 +64,14 @@ pub fn run() {
                     let stop = mouse_shortcut::start(app.handle().clone(), &shortcut_key);
                     state.lock().unwrap().mouse_stop = Some(stop);
                 } else {
-                    shortcut::setup_shortcut(app, &shortcut_key)?;
+                    let key = if shortcut::setup_shortcut(app, &shortcut_key).is_err() {
+                        let fallback = "Alt+F1".to_string();
+                        let _ = shortcut::setup_shortcut(app, &fallback);
+                        fallback
+                    } else {
+                        shortcut_key.clone()
+                    };
+                    state.lock().unwrap().shortcut_key = key;
                 }
             }
 

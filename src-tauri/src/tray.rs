@@ -66,15 +66,14 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
     // ========== 创建基础菜单项 ==========
     let quit_item = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let config_item = MenuItem::with_id(app, "config", "Config", true, None::<&str>)?;
-    let shortcut_text = {
+    let shortcut_disabled = {
         let s = state.lock().unwrap();
-        if s.shortcut_enabled {
-            "Disable Shortcut"
-        } else {
-            "Enable Shortcut"
-        }
+        !s.shortcut_enabled
     };
-    let shortcut_item = MenuItem::with_id(app, "shortcut", shortcut_text, true, None::<&str>)?;
+    let shortcut_item = CheckMenuItemBuilder::new("Disable Shortcut")
+        .id("shortcut")
+        .checked(shortcut_disabled)
+        .build(app)?;
 
     // 获取当前选中的模型
     let config = config::read_or_create_config().unwrap_or_default();
@@ -151,8 +150,16 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
     let theme_items_clone = theme_items.clone();
 
     // 创建托盘图标并绑定菜单事件
-    let _tray = TrayIconBuilder::new()
+    let version = app.package_info().version.to_string();
+    let tooltip = format!(
+        "Translate {}\nShortcut: {}\nTheme: {}",
+        version,
+        config.select.shortcut,
+        if current_theme.is_empty() { "Default" } else { &current_theme }
+    );
+    let _tray = TrayIconBuilder::with_id("main")
         .icon(app.default_window_icon().unwrap().clone())
+        .tooltip(&tooltip)
         .menu(&main_menu)
         .on_menu_event(move |app, event| match event.id.as_ref() {
             "quit" => {
@@ -162,30 +169,24 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
                 let _ = config::open_config_file(app);
             }
             "shortcut" => {
+                let disabled = shortcut_item_clone.is_checked().unwrap_or_default();
                 let mut s = state.lock().unwrap();
-                s.shortcut_enabled = !s.shortcut_enabled;
+                s.shortcut_enabled = !disabled;
 
-                if s.shortcut_enabled {
+                if disabled {
+                    if let Some(flag) = s.mouse_stop.take() {
+                        flag.store(true, std::sync::atomic::Ordering::Relaxed);
+                    } else {
+                        let _ = app.global_shortcut().unregister(&*s.shortcut_key);
+                    }
+                } else {
                     if crate::mouse_shortcut::is_mouse_shortcut(&s.shortcut_key) {
                         let stop = crate::mouse_shortcut::start(app.clone(), &s.shortcut_key);
                         s.mouse_stop = Some(stop);
                     } else {
                         let _ = app.global_shortcut().register(&*s.shortcut_key);
                     }
-                } else {
-                    if let Some(flag) = s.mouse_stop.take() {
-                        flag.store(true, std::sync::atomic::Ordering::Relaxed);
-                    } else {
-                        let _ = app.global_shortcut().unregister(&*s.shortcut_key);
-                    }
                 }
-
-                let new_text = if s.shortcut_enabled {
-                    "Disable Shortcut"
-                } else {
-                    "Enable Shortcut"
-                };
-                let _ = shortcut_item_clone.set_text(new_text);
             }
             "model_deepseek" => {
                 let _ = config::switch_model("deepseek");
@@ -226,6 +227,18 @@ pub fn init_tray(app: &tauri::App, state: Arc<Mutex<AppState>>) -> tauri::Result
                     for item in &theme_items_clone {
                         let item_name = item.id().as_ref().strip_prefix("theme_").unwrap_or("");
                         let _ = item.set_checked(item_name == name);
+                    }
+                    if let Some(tray) = app.tray_by_id("main") {
+                        if let Ok(cfg) = config::read_or_create_config() {
+                            let theme_label = if name.is_empty() { "Default" } else { name };
+                            let new_tooltip = format!(
+                                "Translate {}\nShortcut: {}\nTheme: {}",
+                                app.package_info().version,
+                                cfg.select.shortcut,
+                                theme_label
+                            );
+                            let _ = tray.set_tooltip(Some(&new_tooltip));
+                        }
                     }
                     let _ = app.emit("theme-changed", name.to_string());
                 } else {
