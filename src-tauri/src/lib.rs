@@ -47,10 +47,10 @@ pub fn run() {
             // 初始化托盘菜单
             tray::init_tray(app, state.clone())?;
 
-            // 先检查更新，完成后再注册快捷键
+            // 异步检查更新，防止阻塞 主 线程
             if auto_update {
                 let handle = handle.clone();
-                tauri::async_runtime::block_on(async move {
+                tauri::async_runtime::spawn(async move {
                     tray::check_and_prompt_update(&handle, true).await;
                 });
             }
