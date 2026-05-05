@@ -13,6 +13,8 @@ use windows::panel;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // 设置 panic hook，在程序异常退出时收集错误信息并生成报告 
+    human_panic::setup_panic!();
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             if let Some(panel) = app.get_webview_window("panel") {
