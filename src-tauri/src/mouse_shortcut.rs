@@ -48,13 +48,13 @@ mod platform {
                 let xbutton = (data.mouseData >> 16) as u8;
                 let target = TARGET_XBUTTON.load(Ordering::Relaxed);
                 let stopped = STOP_FLAG.get()
-                    .and_then(|m| m.lock().ok())
+                    .and_then(|m| m.try_lock().ok())
                     .and_then(|g| g.as_ref().map(|s| s.load(Ordering::Relaxed)))
                     .unwrap_or(true);
 
                 if !stopped && xbutton == target {
                     if msg == WM_XBUTTONUP {
-                        if let Some(tx) = TX.get().and_then(|m| m.lock().ok()).and_then(|g| g.clone()) {
+                        if let Some(tx) = TX.get().and_then(|m| m.try_lock().ok()).and_then(|g| g.clone()) {
                             let _ = tx.try_send(());
                         }
                     }
